@@ -1,0 +1,8 @@
+{
+    "database":{
+        "host":"localhost",
+        "user":"root",
+        "password":"25274",
+        "database name":"ourapp"
+    }
+}
