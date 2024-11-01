@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRouter } from 'expo-router';
 import React, { useState, useRef, useEffect } from 'react';
 
-export default function Home() {
+export default function Explore() {
   const navigation = useNavigation();
   const router = useRouter();
 

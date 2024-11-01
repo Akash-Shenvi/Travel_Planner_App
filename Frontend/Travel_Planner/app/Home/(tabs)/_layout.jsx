@@ -1,9 +1,17 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
-import React from 'react';
+import React, {  useEffect } from 'react';
+import { useNavigation, useRouter } from 'expo-router';
 
 export default function _layout() {
+    const router = useRouter();
+    const navigation = useNavigation();
+    useEffect(() => {
+    navigation.setOptions({
+      headerShown: false,
+    });
+  }, [navigation]);
   return (
     <Tabs
       screenOptions={({ route }) => ({
