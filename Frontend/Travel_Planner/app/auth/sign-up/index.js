@@ -62,7 +62,7 @@ export default function SignUp() {
       };
 
       // Make POST request to the backend
-      const response = await axios.post('http://192.168.251.138:5000/signup', requestData);
+      const response = await axios.post('http://192.168.160.138:5000/signup', requestData);
 
       if (response.status === 201) {
         // Show success modal

@@ -54,7 +54,7 @@ export default function Login() {
         </Text>
       
         <TouchableOpacity 
-          onPress={() => router.push('Home')}
+          onPress={() => router.push('auth/sign-in')}
         >
           <Text style={styles.button}>
             Get Started
