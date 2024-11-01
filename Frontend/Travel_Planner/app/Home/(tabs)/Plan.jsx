@@ -88,29 +88,7 @@ export default function Plan() {
         </Animated.View>
       )}
 
-      {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity onPress={() => router.push('/Home')}>
-          <Ionicons name="home-outline" size={24} color="black" />
-          <Text style={styles.navText}>Explore</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/Home/Search')}>
-          <Ionicons name="search-outline" size={24} color="black" />
-          <Text style={styles.navText}>Search</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="heart-outline" size={24} color="black" />
-          <Text style={styles.navText}>Plan</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="pencil-outline" size={24} color="black" />
-          <Text style={styles.navText}>Review</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="person-outline" size={24} color="black" />
-          <Text style={styles.navText}>Account</Text>
-        </TouchableOpacity>
-      </View>
+      
     </View>
   );
 }
@@ -217,23 +195,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'outfit-Bold',
   },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 10,
-    backgroundColor: '#F5F5F5',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  navText: {
-    fontFamily: 'outfit',
-    fontSize: 12,
-    marginTop: 5,
-    color: 'black',
-  },
+ 
+ 
 });

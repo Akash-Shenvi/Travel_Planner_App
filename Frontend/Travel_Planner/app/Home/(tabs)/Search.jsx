@@ -58,29 +58,7 @@ export default function SearchScreen() {
         </ScrollView>
       </ScrollView>
 
-      {/* Bottom Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity onPress={() => router.push('/Home')}>
-          <Ionicons name="home-outline" size={24} color="black" />
-          <Text style={styles.navText}>Explore</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="search-outline" size={24} color="black" />
-          <Text style={styles.navText}>Search</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/Home/Plan')}>
-          <Ionicons name="heart-outline" size={24} color="black" />
-          <Text style={styles.navText}>Plan</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="pencil-outline" size={24} color="black" />
-          <Text style={styles.navText}>Review</Text>
-        </TouchableOpacity>
-        <TouchableOpacity>
-          <Ionicons name="person-outline" size={24} color="black" />
-          <Text style={styles.navText}>Account</Text>
-        </TouchableOpacity>
-      </View>
+      
     </View>
   );
 }
@@ -127,20 +105,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     width: 160,
   },
-  experienceImage: { width: '100%', height: 120 },
-  heartIcon: { position: 'absolute', top: 10, right: 10 },
-  experienceText: { marginVertical: 10, fontSize: 14, textAlign: 'center' },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 15,
-    backgroundColor: '#F5F5F5',
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0', // Optional: for a subtle border on top
-  },
-  navText: {
-    fontFamily: 'outfit',
-    fontSize: 12,
-    marginTop: 5,
-  },
+ 
 });
