@@ -14,7 +14,7 @@ def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-
+   
     query = "SELECT name, password FROM users WHERE email = %s"
     cursor_object.execute(query, (email,))
     result = cursor_object.fetchone()
@@ -94,7 +94,7 @@ def password_reset():
         cursor_object.execute(query_update, (hashed_password, email))
         database.commit()
 
-        # Clear OTP after successful reset
+        # Clear OTP after successful reset 
         otp_storage.pop(email, None)
         
         return jsonify({"response": "Password reset successfully"}), 200
