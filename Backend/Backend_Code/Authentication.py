@@ -2,9 +2,10 @@ from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from .db import cursor_object, database  # Import the cursor object and database connection
 import random
+from flask_mail import Mail, Message
 
 auth = Blueprint('auth', __name__)
-
+mail=Mail()
 # Temporary storage for OTPs
 otp_storage = {}
 
@@ -66,6 +67,14 @@ def otp_req():
 
     # Print OTP to console for testing purposes
     print(f"Generated OTP for {email}: {otp}")
+    # msg = Message('Your OTP for password reset', sender='akashshenvi93outlook.com', recipients='akashshenvi8@gmail.com')
+    # msg.body = f"Your OTP is {otp}. It will expire in 10 minutes."
+    
+    # try:
+    #     mail.send(msg)  # Correctly sending the message
+    #     return jsonify({"response": "OTP sent successfully."}), 200  # Return a success response
+    # except Exception as e:
+    #     return jsonify({"response": "Failed to send OTP.", "error": str(e)}), 500
 
     return jsonify({"response": "OTP generated and printed to console"}), 200
 
