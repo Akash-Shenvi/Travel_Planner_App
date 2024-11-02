@@ -136,17 +136,21 @@ export default function Explore() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fff',
+    
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
+    marginTop:20,
+    
   },
   headerText: {
     fontSize: 28,
     fontFamily: 'outfit-Bold',
+    
   },
   categoriesContainer: {
     flexDirection: 'row',

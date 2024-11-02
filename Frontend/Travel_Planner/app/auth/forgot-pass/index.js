@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Alert } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { useNavigation, useRouter } from 'expo-router';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -6,10 +6,15 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 export default function ForgotPassword() {
   const navigation = useNavigation();
   const router = useRouter();
-  
-  const [input, setInput] = useState(''); // For email or phone input
-  const [otp, setOtp] = useState(''); // For OTP input
-  const [otpSent, setOtpSent] = useState(false); // Track OTP request
+
+  const [input, setInput] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -17,18 +22,81 @@ export default function ForgotPassword() {
     });
   }, [navigation]);
 
-  // Function to simulate OTP request
-  const handleRequestOtp = () => {
-    if (input) {
-      setOtpSent(true); // Simulate OTP sent status
-      // Add backend request logic here
+  // Email validation
+  const isValidEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Password validation
+  const isValidPassword = (password) => {
+    const passwordRegex = /^(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+    return passwordRegex.test(password);
+  };
+
+  const handleRequestOtp = async () => {
+    if (!isValidEmail(input)) {
+      Alert.alert("Error", "Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.160.138:5000/otpreq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: input }),
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        setOtpSent(true);
+        Alert.alert("Success", result.response);
+      } else {
+        Alert.alert("Error", result.response);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      Alert.alert("Error", "An error occurred. Please try again.");
     }
   };
 
-  // Function to verify OTP
   const handleVerifyOtp = () => {
     if (otp) {
-      // Logic to verify OTP
+      setOtpVerified(true);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!isValidPassword(newPassword)) {
+      Alert.alert(
+        "Week Password",
+        "Password must be at least 6 characters long, include one uppercase letter, one number, and one special character."
+      );
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.160.138:5000/password_reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: input, otp, new_password: newPassword }),
+      });
+      const result = await response.json();
+
+      if (response.ok) {
+        Alert.alert("Success", result.response);
+        router.replace('auth/sign-in');
+      } else {
+        Alert.alert("Error", result.response);
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      Alert.alert("Error", "An error occurred. Please try again.");
     }
   };
 
@@ -40,54 +108,90 @@ export default function ForgotPassword() {
 
       <Text style={styles.title}>Forgot Password</Text>
 
-      {/* Input for Email or Phone Number */}
-      <View>
-        <Text style={styles.label}>Email or Phone Number</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Email or Phone Number"
-          value={input}
-          onChangeText={setInput}
-          keyboardType="default" // Can change to 'email-address' or 'phone-pad' if needed
-        />
-      </View>
-
-      {/* Request OTP Button */}
-      <TouchableOpacity
-        style={styles.buttonContainer}
-        onPress={handleRequestOtp}
-      >
-        <Text style={styles.buttonText}>Request OTP</Text>
-      </TouchableOpacity>
-
-      {/* OTP Input and Verify OTP Button (only shows if OTP is sent) */}
-      {otpSent && (
+      {!otpVerified && (
         <>
           <View>
-            <Text style={styles.label}>Enter OTP</Text>
+            <Text style={styles.label}>Email </Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter OTP"
-              value={otp}
-              onChangeText={setOtp}
-              keyboardType="numeric"
+              placeholder="Enter Email "
+              value={input}
+              onChangeText={setInput}
+              keyboardType="default"
             />
           </View>
 
-          <TouchableOpacity
-            style={styles.buttonContainer}
-            onPress={() => router.replace('auth/forgot-pass-after-otp')}
-          >
-            <Text style={styles.buttonText}>Verify OTP</Text>
+          {!otpSent && (
+            <TouchableOpacity style={styles.buttonContainer} onPress={handleRequestOtp}>
+              <Text style={styles.buttonText}>Request OTP</Text>
+            </TouchableOpacity>
+          )}
+
+          {otpSent && (
+            <>
+              <View>
+                <Text style={styles.label}>Enter OTP</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChangeText={setOtp}
+                  keyboardType="numeric"
+                />
+              </View>
+              <TouchableOpacity style={styles.buttonContainer} onPress={handleVerifyOtp}>
+                <Text style={styles.buttonText}>Verify OTP</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </>
+      )}
+
+      {otpVerified && (
+        <>
+          <View>
+            <Text style={styles.label}>New Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Enter New Password"
+                secureTextEntry={!passwordVisible}
+                value={newPassword}
+                onChangeText={setNewPassword}
+              />
+              <Ionicons
+                name={passwordVisible ? "eye-off" : "eye"}
+                size={24}
+                color="grey"
+                onPress={() => setPasswordVisible(!passwordVisible)}
+              />
+            </View>
+          </View>
+          <View>
+            <Text style={styles.label}>Confirm Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Confirm New Password"
+                secureTextEntry={!confirmPasswordVisible}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+              <Ionicons
+                name={confirmPasswordVisible ? "eye-off" : "eye"}
+                size={24}
+                color="grey"
+                onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+              />
+            </View>
+          </View>
+          <TouchableOpacity style={styles.buttonContainer} onPress={handleResetPassword}>
+            <Text style={styles.buttonText}>Reset Password</Text>
           </TouchableOpacity>
         </>
       )}
 
-      {/* Back to Sign In Button */}
-      <TouchableOpacity
-        onPress={() => router.replace('auth/sign-in')}
-        style={styles.signInContainer}
-      >
+      <TouchableOpacity onPress={() => router.replace('auth/sign-in')} style={styles.signInContainer}>
         <Text style={styles.signInText}>Back to Sign In</Text>
       </TouchableOpacity>
     </View>
@@ -119,6 +223,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 50,
     borderColor: 'grey',
+    fontFamily: 'outfit',
+    fontSize: 14,
+  },
+  passwordContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 50,
+    borderColor: 'grey',
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+  },
+  passwordInput: {
+    flex: 1,
     fontFamily: 'outfit',
     fontSize: 14,
   },
