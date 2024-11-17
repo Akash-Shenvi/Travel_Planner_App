@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, FlatList, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import axios from 'axios';
-import { useNavigation } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 // Replace with your actual Google Places API key from gomaps.pro
 const GOOGLE_API_KEY = 'AlzaSyhBE3HB6gaH5W13dDCCjCpkv24AfQD_lWW';
@@ -9,13 +9,9 @@ const GOOGLE_API_KEY = 'AlzaSyhBE3HB6gaH5W13dDCCjCpkv24AfQD_lWW';
 export default function PlaceSearch() {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
-  const navigation = useNavigation();
+  const router = useRouter();
 
   useEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-
     const fetchSuggestions = async () => {
       if (query.length < 3) return; // Start searching after 3 characters
       try {
@@ -56,18 +52,15 @@ export default function PlaceSearch() {
       );
 
       const placeDetails = response.data.result;
-      console.log('Selected Place:', place.description);
-      console.log('Place Details:', placeDetails);
-      console.log('Place Details:', placeDetails.geometry.location);
-      console.log('Place Details:', placeDetails.url);
 
-
-      // Set the query to selected place name and clear suggestions
-      setQuery(place.description);
-      setSuggestions([]);
-      
-      // Use placeDetails as needed, for example, navigate with details
-      // router.push('/destination', { coordinates: placeDetails.geometry.location });
+      // Navigate to the next page using router.push
+      router.push({
+        pathname: 'Home/Ai_Trip/SelectTraveller', // Replace with your target route
+        params: {
+          name: place.description,
+          location: placeDetails.geometry.location,
+        },
+      });
     } catch (error) {
       console.error('Error fetching place details:', error);
     }
@@ -94,7 +87,7 @@ export default function PlaceSearch() {
         />
       )}
 
-      {/* Google branding as in your example */}
+      {/* Google branding */}
       <View style={styles.poweredByGoogleContainer}>
         <Image
           source={{
