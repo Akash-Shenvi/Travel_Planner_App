@@ -10,3 +10,4 @@ MAIL_USE_SSL=True
 MAIL_USERNAME = mymail['mailuser']  
 MAIL_PASSWORD = mymail['mailpassword']
 
+ 
