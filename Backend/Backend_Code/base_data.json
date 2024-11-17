@@ -4,5 +4,11 @@
         "user":"root",
         "password":"25274",
         "database name":"ourapp"
+    },
+    "mailinfo":{
+        "mailserver":"smtp.gmail.com",
+        "mailport":465,
+        "mailuser":"accmovie906@gmail.com",
+        "mailpassword":"uuyzznotdgihexip"
     }
 }

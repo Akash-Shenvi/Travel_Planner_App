@@ -63,7 +63,7 @@ export default function SignUp() {
         phone,
       };
 
-      const response = await axios.post('http://192.168.160.138:5000/signup', requestData);
+      const response = await axios.post('http://192.168.67.246:5000/signup', requestData);
 
       if (response.status === 201) {
         setModalVisible(true);
