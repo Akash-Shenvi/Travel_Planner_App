@@ -11,36 +11,53 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-// import DateTimePicker from '@react-native-community/datetimepicker'; // Ensure you have this installed
+import DatePicker from 'react-native-date-picker';
+import { Picker } from '@react-native-picker/picker';
+
+const STATES_OF_INDIA = [
+  { label: 'Andhra Pradesh', value: 'Andhra Pradesh' },
+  { label: 'Arunachal Pradesh', value: 'Arunachal Pradesh' },
+  { label: 'Assam', value: 'Assam' },
+  { label: 'Bihar', value: 'Bihar' },
+  { label: 'Chhattisgarh', value: 'Chhattisgarh' },
+  { label: 'Goa', value: 'Goa' },
+  { label: 'Gujarat', value: 'Gujarat' },
+  { label: 'Haryana', value: 'Haryana' },
+  { label: 'Himachal Pradesh', value: 'Himachal Pradesh' },
+  { label: 'Jharkhand', value: 'Jharkhand' },
+  { label: 'Karnataka', value: 'Karnataka' },
+  { label: 'Kerala', value: 'Kerala' },
+  { label: 'Madhya Pradesh', value: 'Madhya Pradesh' },
+  { label: 'Maharashtra', value: 'Maharashtra' },
+  { label: 'Manipur', value: 'Manipur' },
+  { label: 'Meghalaya', value: 'Meghalaya' },
+  { label: 'Mizoram', value: 'Mizoram' },
+  { label: 'Nagaland', value: 'Nagaland' },
+  { label: 'Odisha', value: 'Odisha' },
+  { label: 'Punjab', value: 'Punjab' },
+  { label: 'Rajasthan', value: 'Rajasthan' },
+  { label: 'Sikkim', value: 'Sikkim' },
+  { label: 'Tamil Nadu', value: 'Tamil Nadu' },
+  { label: 'Telangana', value: 'Telangana' },
+  { label: 'Tripura', value: 'Tripura' },
+  { label: 'Uttar Pradesh', value: 'Uttar Pradesh' },
+  { label: 'Uttarakhand', value: 'Uttarakhand' },
+  { label: 'West Bengal', value: 'West Bengal' },
+];
 
 export default function EditProfile() {
   const [name, setName] = useState('Akash Shenvi');
   const [dob, setDob] = useState(new Date());
   const [gender, setGender] = useState('');
   const [maritalStatus, setMaritalStatus] = useState('');
-  const [anniversaryDate, setAnniversaryDate] = useState(new Date());
   const [nationality, setNationality] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [email, setEmail] = useState('akashshenvi93@gmail.com');
   const [phone, setPhone] = useState('');
   const [profileImage, setProfileImage] = useState(null);
-  const [isEditing, setIsEditing] = useState(false); // For toggling edit mode
+  const [isEditing, setIsEditing] = useState(false);
   const [showDobPicker, setShowDobPicker] = useState(false);
-  const [showAnniversaryPicker, setShowAnniversaryPicker] = useState(false);
-
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setProfileImage(result.uri);
-    }
-  };
 
   const saveProfile = () => {
     alert('Profile Saved');
@@ -51,45 +68,36 @@ export default function EditProfile() {
     setIsEditing(!isEditing);
   };
 
-  const handleDobChange = (event, selectedDate) => {
-    const currentDate = selectedDate || dob;
-    setShowDobPicker(Platform.OS === 'ios'); // For iOS picker dialog handling
-    setDob(currentDate);
-  };
-
-  const handleAnniversaryChange = (event, selectedDate) => {
-    const currentDate = selectedDate || anniversaryDate;
-    setShowAnniversaryPicker(Platform.OS === 'ios'); // For iOS picker dialog handling
-    setAnniversaryDate(currentDate);
+  const logout = () => {
+    alert('Logged Out');
   };
 
   return (
     <KeyboardAvoidingView
       style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView
         style={styles.container}
-        contentContainerStyle={{ paddingBottom: 100 }} // Add padding to avoid mobile number hiding
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
         <View style={styles.header}>
           <TouchableOpacity onPress={() => console.log('Back pressed')}>
             <Ionicons name="arrow-back" size={30} color="black" />
           </TouchableOpacity>
           <Text style={styles.headerText}>Edit Profile</Text>
-          {isEditing ? (
-            <TouchableOpacity onPress={saveProfile}>
-              <Text style={styles.saveText}>Save</Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity onPress={toggleEdit}>
-              <Text style={styles.saveText}>Edit</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            onPress={isEditing ? saveProfile : toggleEdit}
+            style={[styles.actionButton, isEditing && styles.saveButton]}
+          >
+            <Text style={styles.actionButtonText}>
+              {isEditing ? 'Save' : 'Edit'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.profilePicContainer}>
-          <TouchableOpacity onPress={pickImage} disabled={!isEditing}>
+          <TouchableOpacity onPress={() => console.log('Change Profile Picture')}>
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={styles.profilePic} />
             ) : (
@@ -108,7 +116,7 @@ export default function EditProfile() {
             placeholder="Enter Name"
             value={name}
             onChangeText={setName}
-            editable={isEditing} // Disable input if not editing
+            editable={isEditing}
           />
         </View>
 
@@ -122,54 +130,43 @@ export default function EditProfile() {
               <Text>{dob.toDateString()}</Text>
             </TouchableOpacity>
             {showDobPicker && (
-              <DateTimePicker
-                value={dob}
+              <DatePicker
+                modal
+                open={showDobPicker}
+                date={dob}
                 mode="date"
-                display="default"
-                onChange={handleDobChange}
+                onConfirm={(date) => {
+                  setDob(date);
+                  setShowDobPicker(false);
+                }}
+                onCancel={() => setShowDobPicker(false)}
               />
             )}
           </View>
           <View style={styles.halfInputContainer}>
             <Text style={styles.label}>Gender</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Gender"
-              value={gender}
-              onChangeText={setGender}
-              editable={isEditing}
-            />
+            <Picker
+              selectedValue={gender}
+              onValueChange={(value) => setGender(value)}
+              enabled={isEditing}
+              style={styles.picker}
+            >
+              <Picker.Item label="Select Gender" value="" />
+              <Picker.Item label="Male" value="Male" />
+              <Picker.Item label="Female" value="Female" />
+            </Picker>
           </View>
         </View>
 
-        <View style={styles.inputRow}>
-          <View style={styles.halfInputContainer}>
-            <Text style={styles.label}>Marital Status</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Married/Single"
-              value={maritalStatus}
-              onChangeText={setMaritalStatus}
-              editable={isEditing}
-            />
-          </View>
-          <View style={styles.halfInputContainer}>
-            <Text style={styles.label}>Anniversary Date</Text>
-            <TouchableOpacity
-              onPress={() => isEditing && setShowAnniversaryPicker(true)}
-              style={styles.dateInput}
-            >
-              <Text>{anniversaryDate.toDateString()}</Text>
-            </TouchableOpacity>
-            {showAnniversaryPicker && (
-              <DateTimePicker
-                value={anniversaryDate}
-                mode="date"
-                display="default"
-                onChange={handleAnniversaryChange}
-              />
-            )}
-          </View>
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Marital Status</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Married/Single"
+            value={maritalStatus}
+            onChangeText={setMaritalStatus}
+            editable={isEditing}
+          />
         </View>
 
         <View style={styles.inputContainer}>
@@ -196,13 +193,17 @@ export default function EditProfile() {
 
         <View style={styles.inputContainer}>
           <Text style={styles.label}>State</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter State"
-            value={state}
-            onChangeText={setState}
-            editable={isEditing}
-          />
+          <Picker
+            selectedValue={state}
+            onValueChange={(value) => setState(value)}
+            enabled={isEditing}
+            style={styles.picker}
+          >
+            <Picker.Item label="Select State" value="" />
+            {STATES_OF_INDIA.map((state) => (
+              <Picker.Item key={state.value} label={state.label} value={state.value} />
+            ))}
+          </Picker>
         </View>
 
         <View style={styles.inputContainer}>
@@ -228,6 +229,10 @@ export default function EditProfile() {
             editable={isEditing}
           />
         </View>
+
+        <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+          <Text style={styles.logoutButtonText}>Log Out</Text>
+        </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -238,7 +243,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     paddingHorizontal: 20,
-    marginTop:20
+    marginTop: 20,
   },
   header: {
     flexDirection: 'row',
@@ -251,64 +256,91 @@ const styles = StyleSheet.create({
     fontFamily: 'outfit-Bold',
     color: 'black',
   },
-  saveText: {
-    fontSize: 16,
-    fontFamily: 'outfit-Bold',
-    color: '#007AFF',
-  },
   profilePicContainer: {
     alignItems: 'center',
-    marginVertical: 20,
   },
   profilePic: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 1,
-    borderColor: 'gray',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
   },
   placeholderPic: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'lightgray',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e0e0e0',
   },
   changePicText: {
-    fontSize: 14,
-    color: '#007AFF',
     marginTop: 10,
-  },
-  inputContainer: {
-    marginBottom: 15,
+    color: '#007BFF',
   },
   label: {
     fontSize: 14,
-    fontFamily: 'outfit-Medium',
-    marginBottom: 5,
+    fontFamily: 'outfit-R',
+    color: 'gray',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 10,
-    padding: 12,
-    fontSize: 14,
-    fontFamily: 'outfit',
-  },
-  dateInput: {
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 10,
-    padding: 12,
-    justifyContent: 'center',
-    height: 50,
+  inputContainer: {
+    marginVertical: 10,
   },
   inputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   halfInputContainer: {
-    width: '48%',
+    flex: 1,
+    marginRight: 10,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    padding: 10,
+    fontSize: 14,
+    fontFamily: 'outfit-R',
+  },
+  picker: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
+    fontFamily: 'outfit-R',
+    height: 50,
+  },
+  dateInput: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 5,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontFamily: 'outfit-R',
+    fontSize: 14,
+  },
+  saveButton: {
+    backgroundColor: 'green',
+  },
+  logoutButton: {
+    marginTop: 20,
+    backgroundColor: 'red',
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  logoutButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontFamily: 'outfit-R',
   },
 });
