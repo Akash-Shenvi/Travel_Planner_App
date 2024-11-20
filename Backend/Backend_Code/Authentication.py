@@ -1,11 +1,13 @@
 import datetime
-from flask import Blueprint, request, jsonify, Flask
+from flask import Blueprint, request, jsonify, Flask, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
 from Backend_Code import emailinfo
 from .db import cursor_object, database  # Import the cursor object and database connection
 import random
 import logging
+import os
+from flask_session import Session
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -21,6 +23,11 @@ app.config['MAIL_PASSWORD'] = emailinfo.MAIL_PASSWORD
 # Initialize Flask-Mail
 mail = Mail(app)
 
+# Configure session
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
+Session(app)
+
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -32,7 +39,6 @@ otp_storage = {}
 auth = Blueprint('auth', __name__)
 
 # Routes
-
 @auth.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -42,18 +48,20 @@ def login():
     if not email or not password:
         return jsonify({"response": "Email and password are required."}), 400
 
-    query = "SELECT name, password FROM users WHERE email = %s"
+    query = "SELECT id, name, password FROM users WHERE email = %s"
     cursor_object.execute(query, (email,))
     result = cursor_object.fetchone()
 
     if result is None:
         return jsonify({"response": "User not found"}), 404
 
-    name, hashed_password = result
+    user_id, name, hashed_password = result
     if check_password_hash(hashed_password, password):
+        session['user_id'] = user_id
+        session['user_name'] = name
         return jsonify({"response": "Login successful", "name": name}), 200
     else:
-        return jsonify({"response": "Incorrect password"}), 401
+        return jsonify({"response": "Incorrect password"}), 400
 
 
 @auth.route('/signup', methods=['POST'])
@@ -67,7 +75,6 @@ def signup():
     if not name or not email or not phone or not password:
         return jsonify({"response": "All fields (name, email, phone, password) are required."}), 400
 
-    # Check if user with same email or phone already exists
     query_check = "SELECT id FROM users WHERE email = %s OR phone = %s"
     cursor_object.execute(query_check, (email, phone))
     existing_user = cursor_object.fetchone()
@@ -75,17 +82,15 @@ def signup():
     if existing_user:
         return jsonify({"response": "User already exists"}), 409
 
-    # Generate OTP and store it with expiry
     otp = random.randint(100000, 999999)
     otp_storage[email] = {
         "otp": otp,
         "expiry": datetime.datetime.now() + datetime.timedelta(minutes=10),
         "name": name,
         "phone": phone,
-        "password": password  # Temporarily store password until verification
+        "password": password
     }
 
-    # Send OTP via email
     msg = Message(
         subject="Registration OTP",
         sender=emailinfo.MAIL_USERNAME,
@@ -122,32 +127,78 @@ def verify_otp():
         del otp_storage[email]
         return jsonify({"message": "OTP has expired."}), 400
 
-    try:
-        if int(user_otp) != stored_otp:
-            return jsonify({"message": "Incorrect OTP."}), 401
-    except ValueError:
-        return jsonify({"message": "OTP must be numeric."}), 400
+    if int(user_otp) != stored_otp:
+        return jsonify({"message": "Incorrect OTP."}), 401
 
-    # Fetch user details from otp_storage
     name = stored_otp_data['name']
     phone = stored_otp_data['phone']
     password = stored_otp_data['password']
-
-    # Hash the password securely
     hashed_password = generate_password_hash(password)
 
     try:
-        # Insert user into the database
         query_insert = "INSERT INTO users (name, email, phone, password) VALUES (%s, %s, %s, %s)"
         cursor_object.execute(query_insert, (name, email, phone, hashed_password))
-        database.commit()  # Commit the transaction
+        database.commit()
     except Exception as e:
         logger.error(f"Failed to save user to database: {e}")
         return jsonify({"message": "Failed to save user information to the database."}), 500
 
-    del otp_storage[email]  # Clean up the OTP after successful registration
+    del otp_storage[email]
     return jsonify({"message": "OTP verified successfully and user registered!"}), 200
 
 
-# Register Blueprint
+@auth.route('/update', methods=['POST'])
+def update():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session['user_id']
+    data = request.get_json()
+
+    # Extract fields for profile update
+    dob = data.get('dob')
+    gender = data.get('gender')
+    marital_status = data.get('marital_status')
+    nationality = data.get('nationality')
+    city = data.get('city')
+    state = data.get('state')
+
+    # Ensure at least one field is provided
+    if not any([dob, gender, marital_status, nationality, city, state]):
+        return jsonify({"error": "No fields provided for update."}), 400
+
+    try:
+        # Check if user already has a profile
+        query_check = "SELECT 1 FROM users_profiles WHERE user_id = %s"
+        cursor_object.execute(query_check, (user_id,))
+        user_exists = cursor_object.fetchone()
+
+        if not user_exists:
+            # Insert a new profile record
+            query_insert = """
+                INSERT INTO users_profiles (user_id, dob, gender, marital_status, nationality, city, state)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor_object.execute(query_insert, (user_id, dob, gender, marital_status, nationality, city, state))
+        else:
+            # Update the existing profile
+            query_update = """
+                UPDATE users_profiles
+                SET dob = %s, gender = %s, marital_status = %s, nationality = %s, city = %s, state = %s
+                WHERE user_id = %s
+            """
+            cursor_object.execute(query_update, (dob, gender, marital_status, nationality, city, state, user_id))
+
+        database.commit()  # Commit the transaction
+        return jsonify({"message": "Profile updated successfully!"}), 200
+
+    except Exception as e:
+        database.rollback()  # Roll back transaction in case of error
+        logger.error(f"Error updating profile: {e}")
+        return jsonify({"error": "Failed to update profile.", "details": str(e)}), 500
+
+
+# Register the blueprint
 app.register_blueprint(auth, url_prefix='/auth')
+
+# Run the app
