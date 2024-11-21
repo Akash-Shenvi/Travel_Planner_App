@@ -147,12 +147,13 @@ def verify_otp():
     return jsonify({"message": "OTP verified successfully and user registered!"}), 200
 
 
-@auth.route('/update', methods=['POST'])
-def update():
+@auth.route('/update_profile', methods=['POST'])
+def update_profile():
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
     user_id = session['user_id']
+    print(user_id)
     data = request.get_json()
 
     # Extract fields for profile update
@@ -196,7 +197,25 @@ def update():
         database.rollback()  # Roll back transaction in case of error
         logger.error(f"Error updating profile: {e}")
         return jsonify({"error": "Failed to update profile.", "details": str(e)}), 500
+    
 
+@auth.route('/view_profile',methods=['POST'])
+def view_profile():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session['user_id']
+    print(user_id)
+    data = request.get_json()
+
+    # Extract fields for profile update
+    dob = data.get('dob')
+    gender = data.get('gender')
+    marital_status = data.get('marital_status')
+    nationality = data.get('nationality')
+    city = data.get('city')
+    state = data.get('state')
+    
 
 # Register the blueprint
 app.register_blueprint(auth, url_prefix='/auth')
