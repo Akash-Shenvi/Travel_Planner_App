@@ -58,7 +58,6 @@ def login():
     user_id, name, hashed_password = result
     if check_password_hash(hashed_password, password):
         session['user_id'] = user_id
-        session['user_name'] = name
         return jsonify({"response": "Login successful", "name": name}), 200
     else:
         return jsonify({"response": "Incorrect password"}), 400
@@ -199,24 +198,55 @@ def update_profile():
         return jsonify({"error": "Failed to update profile.", "details": str(e)}), 500
     
 
-@auth.route('/view_profile',methods=['POST'])
+@auth.route('/view_profile', methods=['POST'])
 def view_profile():
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
     user_id = session['user_id']
-    print(user_id)
-    data = request.get_json()
 
-    # Extract fields for profile update
-    dob = data.get('dob')
-    gender = data.get('gender')
-    marital_status = data.get('marital_status')
-    nationality = data.get('nationality')
-    city = data.get('city')
-    state = data.get('state')
+    try:
+        # Query to fetch user profile
+        query = """
+        SELECT u.name, u.email, u.phone, up.dob, up.gender, up.marital_status, up.nationality, up.city, up.state
+        FROM users u
+        LEFT JOIN users_profiles up ON u.id = up.user_id
+        WHERE u.id = %s
+        """
+        cursor_object.execute(query, (user_id,))
+        user_profile = cursor_object.fetchone()
+
+        if not user_profile:
+            return jsonify({"error": "User profile not found"}), 404
+
+        # Map the profile fields to a dictionary for JSON response
+        profile_data = {
+            "name": user_profile[0],
+            "email": user_profile[1],
+            "phone": user_profile[2],
+            "dob": user_profile[3],
+            "gender": user_profile[4],
+            "marital_status": user_profile[5],
+            "nationality": user_profile[6],
+            "city": user_profile[7],
+            "state": user_profile[8],
+        }
+
+        return jsonify({"profile": profile_data}), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching profile: {e}")
+        return jsonify({"error": "An error occurred while fetching the profile.", "details": str(e)}), 500
+
     
-
+@auth.route('/logout',methods=['POST'])
+def logout():
+    if 'user_id' in session:
+        session.pop('user_id', None)
+        return jsonify({"message": "Logged out successfully"}), 200
+    else:
+        return jsonify({"error": "No user logged in"}), 401
+    
 # Register the blueprint
 app.register_blueprint(auth, url_prefix='/auth')
 
