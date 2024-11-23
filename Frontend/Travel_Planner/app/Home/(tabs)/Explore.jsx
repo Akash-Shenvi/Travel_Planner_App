@@ -1,10 +1,11 @@
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router';
+import { useNavigation ,useRouter} from 'expo-router';
 import React, { useEffect } from 'react';
 
 export default function Explore() {
   const navigation = useNavigation();
+  const router = useRouter();
 
   useEffect(() => {
     navigation.setOptions({
@@ -63,6 +64,14 @@ export default function Explore() {
           <Text style={styles.destinationSubtitle}>Italy</Text>
         </View>
       </ScrollView>
+
+      {/* Chatbot Icon */}
+      <TouchableOpacity
+        style={styles.chatbotButton}
+        onPress={() => router.push('Home/ChatbotPage')}
+      >
+        <Ionicons name="chatbubbles" size={28} color="white" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -157,5 +166,21 @@ const styles = StyleSheet.create({
     color: 'gray',
     marginLeft: 5,
     marginBottom: 5,
+  },
+  chatbotButton: {
+    position: 'absolute',
+    bottom: 70, // Above the tab bar
+    right: 20,
+    backgroundColor: 'skyblue',
+    borderRadius: 30,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
 });
