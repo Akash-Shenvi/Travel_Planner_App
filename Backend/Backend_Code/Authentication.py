@@ -58,6 +58,7 @@ def login():
     user_id, name, hashed_password = result
     if check_password_hash(hashed_password, password):
         session['user_id'] = user_id
+        print(user_id)
         return jsonify({"response": "Login successful", "name": name}), 200
     else:
         return jsonify({"response": "Incorrect password"}), 400
@@ -246,7 +247,74 @@ def logout():
         return jsonify({"message": "Logged out successfully"}), 200
     else:
         return jsonify({"error": "No user logged in"}), 401
+
+@auth.route('/otpreq', methods=['POST'])
+def otp_req():
+    data = request.get_json()
+    email = data.get('email')
+
+    # Check if user exists
+    query = "SELECT id FROM users WHERE email = %s"
+    cursor_object.execute(query, (email,))
+    res = cursor_object.fetchone()
+
+    if not res:
+        return jsonify({"response": "User not found"}), 404
+
+    # Generate OTP
+    otp = random.randint(100000, 999999)
+    expiration_time = datetime.datetime.now() + datetime.timedelta(minutes=10)
+    otp_storage[email] = {'otp': otp, 'expires_at': expiration_time}
+
+    # Print OTP to console for testing purposes
+    print(f"Generated OTP for {email}: {otp}")
+
+    # Send email with OTP
+    msg = Message('Your OTP for password reset', sender='noreply@gmail.com', recipients=[email])
+    msg.body = f"Your OTP is {otp}. It will expire in 10 minutes."
+
+    try:
+        with app.app_context():
+            mail.send(msg)
+            return jsonify({"response": "OTP sent successfully."}), 200
+    except Exception as e:
+        return jsonify({"response": "Failed to send OTP.", "error": str(e)}), 500
+
+@auth.route('/password_reset', methods=['POST'])
+def password_reset():
+    data = request.get_json()
+    email = data.get('email')
+    otp = data.get('otp')
+    new_password = data.get('new_password')
+
+    # Check if OTP exists for the given email and if it is still valid
+    if email not in otp_storage:
+        return jsonify({"response": "OTP not requested or expired."}), 404
     
+    stored_otp_data = otp_storage[email]
+    stored_otp = stored_otp_data['otp']
+    expiration_time = stored_otp_data['expires_at']
+
+    # Check if the OTP has expired
+    if datetime.datetime.now() > expiration_time:
+        otp_storage.pop(email, None)  # Remove expired OTP
+        return jsonify({"response": "OTP has expired."}), 401
+
+    # Validate OTP
+    if int(otp) == stored_otp:
+        # Hash new password and update it
+        hashed_password = generate_password_hash(new_password)
+
+        query_update = "UPDATE users SET password = %s WHERE email = %s"
+        cursor_object.execute(query_update, (hashed_password, email))
+        database.commit()
+
+        # Clear OTP after successful reset
+        otp_storage.pop(email, None)
+
+        return jsonify({"response": "Password reset successfully"}), 200
+    else:
+        return jsonify({"response": "Invalid OTP"}), 401
 # Register the blueprint
 app.register_blueprint(auth, url_prefix='/auth')
 

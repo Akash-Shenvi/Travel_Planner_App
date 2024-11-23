@@ -1,45 +1,23 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity, TextInput, Animated, ScrollView } from 'react-native';
-
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation, useRouter } from 'expo-router';
-import React, { useState, useRef, useEffect } from 'react';
+import { useNavigation } from 'expo-router';
+import React, { useEffect } from 'react';
 
 export default function Explore() {
   const navigation = useNavigation();
-  const router = useRouter();
 
-  const [profileVisible, setProfileVisible] = useState(false);
-  const slideAnim = useRef(new Animated.Value(-500)).current;
   useEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
   }, [navigation]);
 
-  // Profile state
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [bio, setBio] = useState('');
-  const [city, setCity] = useState('');
-  const [dob, setDob] = useState('');
-  const [instagram, setInstagram] = useState('');
-  const [gender, setGender] = useState('');
-
-  const toggleProfile = () => {
-    setProfileVisible(!profileVisible);
-    Animated.timing(slideAnim, {
-      toValue: profileVisible ? -500 : 0,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  };
-
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerText}>Explore</Text>
-        <TouchableOpacity onPress={toggleProfile}>
+        <TouchableOpacity>
           <Ionicons name="person-circle-outline" size={40} color="black" />
         </TouchableOpacity>
       </View>
@@ -81,54 +59,10 @@ export default function Explore() {
           <Text style={styles.destinationSubtitle}>Indonesia</Text>
         </View>
         <View style={styles.destinationCard}>
-        
           <Text style={styles.destinationTitle}>Siena</Text>
           <Text style={styles.destinationSubtitle}>Italy</Text>
         </View>
       </ScrollView>
-
-      {/* Profile Slide-In Panel */}
-      <Animated.View style={[styles.profileContainer, { transform: [{ translateX: slideAnim }] }]}>
-        <ScrollView contentContainerStyle={styles.profileContent}>
-          <Image source={{ uri: "https://example.com/profile-pic.jpg" }} style={styles.profilePic} />
-          <Text style={styles.emailText}>{email}</Text>
-
-          <Text style={styles.label}>Name</Text>
-          <Text style={styles.nonEditableText}>{name}</Text>
-
-          <Text style={styles.label}>Short bio</Text>
-          <TextInput style={styles.input} placeholder="Tell us a bit about yourself" value={bio} onChangeText={setBio} />
-
-          <Text style={styles.label}>Home city</Text>
-          <TextInput style={styles.input} placeholder="Enter your city" value={city} onChangeText={setCity} />
-
-          <Text style={styles.label}>Date of birth</Text>
-          <TextInput style={styles.input} placeholder="DD / MM / YYYY" value={dob} onChangeText={setDob} keyboardType="numeric" />
-
-          <Text style={styles.label}>Instagram</Text>
-          <TextInput style={styles.input} placeholder="Paste your profile link" value={instagram} onChangeText={setInstagram} />
-
-          <Text style={styles.label}>Gender</Text>
-          <View style={styles.genderContainer}>
-            {['Male', 'Female', 'Other'].map((option) => (
-              <TouchableOpacity key={option} style={styles.genderOption} onPress={() => setGender(option)}>
-                <Ionicons name={gender === option ? 'radio-button-on' : 'radio-button-off'} size={18} color="black" />
-                <Text style={styles.genderText}>{option}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TouchableOpacity style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={toggleProfile} style={styles.closeButton}>
-            <Ionicons name="close-circle-outline" size={30} color="black" />
-          </TouchableOpacity>
-        </ScrollView>
-      </Animated.View>
-
-    
     </View>
   );
 }
@@ -137,20 +71,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    marginTop:20,
-    
+    marginTop: 20,
   },
   headerText: {
     fontSize: 28,
     fontFamily: 'outfit-Bold',
-    
   },
   categoriesContainer: {
     flexDirection: 'row',
@@ -227,80 +158,4 @@ const styles = StyleSheet.create({
     marginLeft: 5,
     marginBottom: 5,
   },
-  profileContainer: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    width: 300,
-    backgroundColor: '#fff',
-    zIndex: 100,
-    paddingTop: 50,
-  },
-  profileContent: {
-    padding: 20,
-  },
-  profilePic: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignSelf: 'center',
-    marginBottom: 15,
-  },
-  emailText: {
-    fontFamily: 'outfit',
-    fontSize: 16,
-    textAlign: 'center',
-    color: 'gray',
-    marginBottom: 20,
-  },
-  label: {
-    fontFamily: 'outfit-Bold',
-    fontSize: 14,
-    marginVertical: 5,
-  },
-  nonEditableText: {
-    fontFamily: 'outfit',
-    fontSize: 14,
-    color: 'gray',
-  },
-  input: {
-    fontFamily: 'outfit',
-    fontSize: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'gray',
-    paddingVertical: 5,
-    marginBottom: 15,
-  },
-  genderContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: 15,
-  },
-  genderOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  genderText: {
-    fontFamily: 'outfit',
-    fontSize: 14,
-    marginLeft: 5,
-  },
-  saveButton: {
-    backgroundColor: '#2196F3',
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  saveButtonText: {
-    color: 'white',
-    fontFamily: 'outfit-Bold',
-    fontSize: 16,
-  },
-  closeButton: {
-    alignItems: 'center',
-    marginTop: 10,
-  },
-  
 });
