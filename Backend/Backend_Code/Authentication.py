@@ -8,10 +8,17 @@ import random
 import logging
 import os
 from flask_session import Session
+import openai
+from flask import Flask, request, jsonify
+from transformers import GPT2LMHeadModel, GPT2Tokenizer
 
 # Initialize Flask app
 app = Flask(__name__)
-
+# openai.api_key = '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'
+# logging.basicConfig(level=logging.DEBUG)
+model_name = "gpt2"
+tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+model = GPT2LMHeadModel.from_pretrained(model_name)
 # Configure Flask-Mail
 app.config['MAIL_SERVER'] = emailinfo.MAIL_SERVER
 app.config['MAIL_PORT'] = emailinfo.MAIL_PORT
@@ -315,7 +322,37 @@ def password_reset():
         return jsonify({"response": "Password reset successfully"}), 200
     else:
         return jsonify({"response": "Invalid OTP"}), 401
+    
+    
+    
+@auth.route('/chat', methods=['POST'])
+def chat():
+    try:
+        # Get the user's message
+        user_message = request.json.get('message', '')
+        if not user_message:
+            return jsonify({'error': 'Message is required'}), 400
+        
+        # Prepare input for GPT-2
+        input_ids = tokenizer.encode(user_message, return_tensors='pt')
+        
+        # Generate a response
+        output = model.generate(
+            input_ids,
+            max_length=150,
+            num_return_sequences=1,
+            pad_token_id=tokenizer.eos_token_id
+        )
+        
+        # Decode the response
+        bot_response = tokenizer.decode(output[0], skip_special_tokens=True)
+        return jsonify({'response': bot_response})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Register the blueprint
+
 app.register_blueprint(auth, url_prefix='/auth')
 
 # Run the app

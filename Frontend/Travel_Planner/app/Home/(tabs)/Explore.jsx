@@ -25,7 +25,9 @@ export default function Explore() {
 
       {/* Explore Categories */}
       <View style={styles.categoriesContainer}>
-        <TouchableOpacity style={styles.categoryButton}>
+        <TouchableOpacity
+        onPress={() => router.push('Home/Hotels')}
+        style={styles.categoryButton}>
           <Ionicons name="bed-outline" size={24} color="black" />
           <Text style={styles.categoryText}>Hotels</Text>
         </TouchableOpacity>

@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
 
@@ -25,13 +33,18 @@ export default function TravelChatbot() {
   const handleSendMessage = async () => {
     if (inputText.trim() === '') return;
 
-    const userMessage = { id: String(messages.length + 1), text: inputText, sender: 'user' };
+    const userMessage = {
+      id: String(Date.now()), // Generate unique ID using timestamp
+      text: inputText,
+      sender: 'user',
+    };
+
     setMessages((prevMessages) => [...prevMessages, userMessage]);
     setInputText(''); // Clear input field
 
     setIsLoading(true); // Show loader while fetching the response
     try {
-      const response = await fetch('http://<your-backend-url>/chat', {
+      const response = await fetch('http://192.168.235.138:5000/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: inputText }),
@@ -39,18 +52,30 @@ export default function TravelChatbot() {
 
       if (response.ok) {
         const data = await response.json();
-        const botMessage = { id: String(messages.length + 2), text: data.reply, sender: 'bot' };
+        const botMessage = {
+          id: String(Date.now() + 1), // Generate another unique ID for the bot message
+          text: data.response, // Adjust to match your API response structure
+          sender: 'bot',
+        };
         setMessages((prevMessages) => [...prevMessages, botMessage]);
       } else {
         setMessages((prevMessages) => [
           ...prevMessages,
-          { id: String(messages.length + 2), text: 'Error communicating with server.', sender: 'bot' },
+          {
+            id: String(Date.now() + 1),
+            text: 'Error communicating with server.',
+            sender: 'bot',
+          },
         ]);
       }
     } catch (error) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: String(messages.length + 2), text: 'Network error. Please try again later.', sender: 'bot' },
+        {
+          id: String(Date.now() + 1),
+          text: 'Network error. Please try again later.',
+          sender: 'bot',
+        },
       ]);
     } finally {
       setIsLoading(false); // Hide loader
@@ -132,7 +157,7 @@ const styles = StyleSheet.create({
     maxWidth: '80%',
   },
   botMessage: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: 'skyblue',
     alignSelf: 'flex-start',
   },
   userMessage: {
