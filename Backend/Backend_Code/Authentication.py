@@ -1,4 +1,5 @@
 import datetime
+import json
 from flask import Blueprint, request, jsonify, Flask, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
@@ -11,13 +12,13 @@ import google.generativeai as genai
 from flask_session import Session
 import openai
 from flask import Flask, request, jsonify
-
+with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'base_data.json'), encoding='utf-8') as fobj:
+    api_key = json.load(fobj)['apikey']
 
 # Initialize Flask app
 app = Flask(__name__)
-# openai.api_key = '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'
-# logging.basicConfig(level=logging.DEBUG)
-api_key = "AIzaSyCB_MBWx4JshiLbK2tGOKgAqraUvps1esU"  # Replace with your actual API key
+
+api_key =api_key['api'] # Replace with your actual API key
 os.environ["GOOGLE_API_KEY"] = api_key
 
 # Configure genai with the API key

@@ -10,5 +10,8 @@
         "mailport":465,
         "mailuser":"accmovie906@gmail.com",
         "mailpassword":"uuyzznotdgihexip"
+    },
+    "apikey":{
+"api":"AIzaSyCB_MBWx4JshiLbK2tGOKgAqraUvps1esU"
     }
 }
