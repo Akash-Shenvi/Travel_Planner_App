@@ -17,7 +17,7 @@ export default function TravelChatbot() {
     { id: '1', text: 'Hi! How can I assist you today?', sender: 'bot' },
   ]);
   const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Show loading indicator during API calls
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     navigation.setOptions({
@@ -44,36 +44,34 @@ export default function TravelChatbot() {
 
     setIsLoading(true); // Show loader while fetching the response
     try {
-      const response = await fetch('http://192.168.235.138:5000/chat', {
+      const response = await fetch('http://192.168.57.138:5000/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: inputText }),
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data && data.response) {
         const botMessage = {
-          id: String(Date.now() + 1), // Generate another unique ID for the bot message
-          text: data.response, // Adjust to match your API response structure
+          id: String(Date.now() + 1),
+          text: data.response,
           sender: 'bot',
         };
         setMessages((prevMessages) => [...prevMessages, botMessage]);
       } else {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            id: String(Date.now() + 1),
-            text: 'Error communicating with server.',
-            sender: 'bot',
-          },
-        ]);
+        throw new Error('Invalid response format');
       }
     } catch (error) {
       setMessages((prevMessages) => [
         ...prevMessages,
         {
           id: String(Date.now() + 1),
-          text: 'Network error. Please try again later.',
+          text: `Error: ${error.message}`,
           sender: 'bot',
         },
       ]);

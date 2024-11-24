@@ -7,18 +7,34 @@ from .db import cursor_object, database  # Import the cursor object and database
 import random
 import logging
 import os
+import google.generativeai as genai
 from flask_session import Session
 import openai
 from flask import Flask, request, jsonify
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+
 
 # Initialize Flask app
 app = Flask(__name__)
 # openai.api_key = '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'
 # logging.basicConfig(level=logging.DEBUG)
-model_name = "gpt2"
-tokenizer = GPT2Tokenizer.from_pretrained(model_name)
-model = GPT2LMHeadModel.from_pretrained(model_name)
+api_key = "AIzaSyCB_MBWx4JshiLbK2tGOKgAqraUvps1esU"  # Replace with your actual API key
+os.environ["GOOGLE_API_KEY"] = api_key
+
+# Configure genai with the API key
+genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
+
+# Create the model generation configuration
+generation_config = {
+    "temperature": 1.0,
+    "top_p": 0.95,
+    "top_k": 40,
+    "max_output_tokens": 8192,
+    "response_mime_type": "text/plain",
+}
+
+# Initialize the model
+model = genai.GenerativeModel(model_name="gemini-1.5-flash", generation_config=generation_config)
+
 # Configure Flask-Mail
 app.config['MAIL_SERVER'] = emailinfo.MAIL_SERVER
 app.config['MAIL_PORT'] = emailinfo.MAIL_PORT
@@ -328,28 +344,25 @@ def password_reset():
 @auth.route('/chat', methods=['POST'])
 def chat():
     try:
-        # Get the user's message
-        user_message = request.json.get('message', '')
+        # Parse user message from the request JSON
+        data = request.json
+        user_message = data.get('message', '')
+
         if not user_message:
-            return jsonify({'error': 'Message is required'}), 400
-        
-        # Prepare input for GPT-2
-        input_ids = tokenizer.encode(user_message, return_tensors='pt')
-        
-        # Generate a response
-        output = model.generate(
-            input_ids,
-            max_length=150,
-            num_return_sequences=1,
-            pad_token_id=tokenizer.eos_token_id
-        )
-        
-        # Decode the response
-        bot_response = tokenizer.decode(output[0], skip_special_tokens=True)
-        return jsonify({'response': bot_response})
-    
+            return jsonify({"error": "Message is required"}), 400
+
+        # Start a chat session and send a message
+        chat_session = model.start_chat(history=[])
+        response = chat_session.send_message(user_message)
+
+        # Return the response in JSON format
+        return jsonify({
+            "message": user_message,
+            "response": response.text  # Assuming the response has a `text` attribute
+        })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
+
 
 # Register the blueprint
 

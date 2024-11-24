@@ -19,9 +19,9 @@ const GOOGLE_API_KEY = 'AlzaSyhBE3HB6gaH5W13dDCCjCpkv24AfQD_lWW'; // Replace wit
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
-  const [selectedPlace, setSelectedPlace] = useState(null);
-  const [nearbyPlaces, setNearbyPlaces] = useState([]);
-  const [placeDetails, setPlaceDetails] = useState(null);
+  const [selectedCity, setSelectedCity] = useState(null);
+  const [nearbyAttractions, setNearbyAttractions] = useState([]);
+  const [selectedAttraction, setSelectedAttraction] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
@@ -37,7 +37,7 @@ export default function SearchScreen() {
           params: {
             input: query,
             key: GOOGLE_API_KEY,
-            types: 'establishment', // Specify types of places
+            types: '(cities)', // Restrict search to cities
             language: 'en',
           },
         });
@@ -50,167 +50,157 @@ export default function SearchScreen() {
     return () => clearTimeout(debounceFetch);
   }, [query]);
 
-  const handleSelectPlace = async (place) => {
+  const handleSelectCity = async (city) => {
     setLoading(true);
     try {
       const response = await axios.get('https://maps.gomaps.pro/maps/api/place/details/json', {
         params: {
-          place_id: place.place_id,
+          place_id: city.place_id,
           key: GOOGLE_API_KEY,
-          fields: 'name,geometry,photos,formatted_address,rating,reviews,opening_hours,website,types', // Add more fields for detailed info
+          fields: 'geometry', // Get city location details
         },
       });
-
-      const placeDetails = response.data.result;
-      const photoRef = placeDetails.photos?.[0]?.photo_reference;
-      const photoUrl = photoRef
-        ? `https://maps.gomaps.pro/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${GOOGLE_API_KEY}`
-        : 'https://via.placeholder.com/400';
-
-      const placeInfo = {
-        id: place.place_id,
-        name: placeDetails.name,
-        address: placeDetails.formatted_address || 'No address available',
-        photoUrl,
-        rating: placeDetails.rating,
-        reviews: placeDetails.reviews || [],
-        openingHours: placeDetails.opening_hours?.weekday_text || [],
-        website: placeDetails.website || 'No website available',
-        types: placeDetails.types || [],
-      };
-
-      setSelectedPlace(placeInfo);
-      fetchNearbyPlaces(placeDetails.geometry.location);
+      const location = response.data.result.geometry.location;
+      setSelectedCity({ name: city.description, location });
+      fetchNearbyAttractions(location);
     } catch (error) {
-      console.error('Error fetching place details:', error);
+      console.error('Error fetching city details:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchNearbyPlaces = async (location) => {
+  const fetchNearbyAttractions = async (location) => {
     try {
       const response = await axios.get('https://maps.gomaps.pro/maps/api/place/nearbysearch/json', {
         params: {
           location: `${location.lat},${location.lng}`,
-          radius: 2000, // Radius in meters to search nearby places
-          type: 'tourist_attraction', // Specify place types
+          radius: 5000, // Radius in meters
+          type: 'tourist_attraction', // Attractions only
           key: GOOGLE_API_KEY,
         },
       });
-      setNearbyPlaces(response.data.results);
+      setNearbyAttractions(response.data.results);
     } catch (error) {
-      console.error('Error fetching nearby places:', error);
+      console.error('Error fetching nearby attractions:', error);
     }
   };
 
-  const showPlaceDetails = async (place) => {
+  const handleSelectAttraction = async (attraction) => {
     setLoading(true);
     try {
       const response = await axios.get('https://maps.gomaps.pro/maps/api/place/details/json', {
         params: {
-          place_id: place.place_id,
+          place_id: attraction.place_id,
           key: GOOGLE_API_KEY,
-          fields: 'name,formatted_address,rating,photos,description', // Add description field
+          fields: 'name,formatted_address,rating,photos,types,opening_hours,website', // Attraction details
         },
       });
-
       const details = response.data.result;
       const photoRef = details.photos?.[0]?.photo_reference;
       const photoUrl = photoRef
         ? `https://maps.gomaps.pro/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${GOOGLE_API_KEY}`
         : 'https://via.placeholder.com/400';
-
-      setPlaceDetails({
+      setSelectedAttraction({
         name: details.name,
         address: details.formatted_address,
         rating: details.rating,
         photoUrl,
-        description: details.description || 'No description available.',
+        types: details.types || [],
+        openingHours: details.opening_hours?.weekday_text || [],
+        website: details.website || 'No website available',
       });
     } catch (error) {
-      console.error('Error fetching detailed place information:', error);
+      console.error('Error fetching attraction details:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleBack = () => {
+    if (selectedAttraction) {
+      setSelectedAttraction(null);
+    } else if (selectedCity) {
+      setSelectedCity(null);
+      setNearbyAttractions([]);
+    } else {
+      setQuery('');
+      setSuggestions([]);
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scrollContainer}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Search</Text>
-        </View>
-
-        <View style={styles.searchBox}>
-          <FontAwesome name="search" size={20} color="gray" style={styles.searchIcon} />
-          <TextInput
-            placeholder="Where to?"
-            style={styles.searchInput}
-            value={query}
-            onChangeText={setQuery}
-          />
-        </View>
-
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
         {loading ? (
-          <ActivityIndicator size="large" color="#ff0000" />
-        ) : selectedPlace ? (
-          <View style={styles.selectedPlaceContainer}>
-            <Image source={{ uri: selectedPlace.photoUrl }} style={styles.selectedPlaceImage} />
-            <Text style={styles.selectedPlaceName}>{selectedPlace.name}</Text>
-            <Text style={styles.selectedPlaceAddress}>{selectedPlace.address}</Text>
-            <Text style={styles.selectedPlaceRating}>Rating: {selectedPlace.rating}</Text>
-
-            <Text style={styles.selectedPlaceWebsite}>
-              Website: {selectedPlace.website || 'No website available'}
-            </Text>
-            <Text style={styles.selectedPlaceTypes}>
-              Types: {selectedPlace.types.join(', ') || 'No types available'}
-            </Text>
-
-            {selectedPlace.openingHours.length > 0 && (
+          <ActivityIndicator size="large" color="#4CAF50" />
+        ) : selectedAttraction ? (
+          <View style={styles.detailsContainer}>
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <FontAwesome name="arrow-left" size={20} color="#4CAF50" />
+            </TouchableOpacity>
+            <Image source={{ uri: selectedAttraction.photoUrl }} style={styles.image} />
+            <Text style={styles.title}>{selectedAttraction.name}</Text>
+            <Text style={styles.subtitle}>{selectedAttraction.address}</Text>
+            <Text style={styles.rating}>Rating: {selectedAttraction.rating || 'N/A'}</Text>
+            <Text style={styles.website}>Website: {selectedAttraction.website}</Text>
+            {selectedAttraction.openingHours.length > 0 && (
               <>
-                <Text style={styles.openingHoursTitle}>Opening Hours:</Text>
-                {selectedPlace.openingHours.map((hour, index) => (
-                  <Text key={index} style={styles.openingHoursText}>
+                <Text style={styles.sectionTitle}>Opening Hours:</Text>
+                {selectedAttraction.openingHours.map((hour, index) => (
+                  <Text key={index} style={styles.text}>
                     {hour}
                   </Text>
                 ))}
               </>
             )}
-
-            <Text style={styles.nearbyTitle}>Nearby Attractions</Text>
+          </View>
+        ) : selectedCity ? (
+          <View style={styles.nearbyContainer}>
+            <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+              <FontAwesome name="arrow-left" size={20} color="#4CAF50" />
+            </TouchableOpacity>
+            <Text style={styles.title}>Nearby Attractions in {selectedCity.name}</Text>
             <FlatList
-              data={nearbyPlaces}
+              data={nearbyAttractions}
               keyExtractor={(item) => item.place_id}
               renderItem={({ item }) => (
-                <TouchableOpacity onPress={() => showPlaceDetails(item)} style={styles.nearbyPlaceCard}>
-                  <Text style={styles.nearbyPlaceName}>{item.name}</Text>
-                  <Text style={styles.nearbyPlaceVicinity}>{item.vicinity}</Text>
+                <TouchableOpacity
+                  style={styles.listItem}
+                  onPress={() => handleSelectAttraction(item)}
+                >
+                  <Text style={styles.listItemText}>{item.name}</Text>
                 </TouchableOpacity>
               )}
             />
           </View>
         ) : (
-          <FlatList
-            data={suggestions}
-            keyExtractor={(item) => item.place_id}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => handleSelectPlace(item)} style={styles.suggestionItem}>
-                <Text style={styles.suggestionText}>{item.description}</Text>
-              </TouchableOpacity>
-            )}
-          />
-        )}
-
-        {placeDetails && (
-          <View style={styles.placeDetailsContainer}>
-            <Image source={{ uri: placeDetails.photoUrl }} style={styles.placeDetailImage} />
-            <Text style={styles.placeDetailName}>{placeDetails.name}</Text>
-            <Text style={styles.placeDetailRating}>Rating: {placeDetails.rating}</Text>
-            <Text style={styles.placeDetailAddress}>{placeDetails.address}</Text>
-            <Text style={styles.placeDetailDescription}>{placeDetails.description}</Text>
-          </View>
+          <>
+            <View style={styles.header}>
+              <Text style={styles.headerText}>Search Cities</Text>
+            </View>
+            <View style={styles.searchBox}>
+              <FontAwesome name="search" size={20} color="gray" style={styles.icon} />
+              <TextInput
+                placeholder="Enter city name"
+                style={styles.input}
+                value={query}
+                onChangeText={setQuery}
+              />
+            </View>
+            <FlatList
+              data={suggestions}
+              keyExtractor={(item) => item.place_id}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.listItem}
+                  onPress={() => handleSelectCity(item)}
+                >
+                  <Text style={styles.listItemText}>{item.description}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </>
         )}
       </ScrollView>
     </View>
@@ -220,52 +210,28 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContainer: { flexGrow: 1 },
-  header: { paddingTop: 40, paddingHorizontal: 20, backgroundColor: '#4CAF50', paddingBottom: 20 },
-  headerText: { fontSize: 24, fontFamily: 'outfit-Bold', color: '#fff' },
+  header: { padding: 20, backgroundColor: '#4CAF50' },
+  headerText: { fontSize: 20, color: '#fff' },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 100,
-    backgroundColor: '#f2f2f2',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  searchIcon: { marginRight: 10 },
-  searchInput: { flex: 1, fontSize: 16 },
-  selectedPlaceContainer: { alignItems: 'center', marginVertical: 20 },
-  selectedPlaceImage: { width: '100%', height: 200, marginBottom: 10, borderRadius: 10 },
-  selectedPlaceName: { fontSize: 24, fontFamily: 'outfit-Bold', color: '#333' },
-  selectedPlaceAddress: { fontSize: 16, color: 'gray', marginBottom: 10 },
-  selectedPlaceRating: { fontSize: 16, color: 'gray' },
-  selectedPlaceWebsite: { fontSize: 14, marginTop: 10, color: '#0000EE', textDecorationLine: 'underline' },
-  selectedPlaceTypes: { fontSize: 14, color: 'gray' },
-  openingHoursTitle: { fontSize: 16, fontFamily: 'outfit-Bold', color: '#4CAF50', marginTop: 10 },
-  openingHoursText: { fontSize: 14, color: '#555' },
-  nearbyTitle: { fontSize: 18, marginTop: 20, marginBottom: 10, color: '#4CAF50' },
-  nearbyPlaceCard: {
+    margin: 20,
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#fafafa',
+    backgroundColor: '#f2f2f2',
     borderRadius: 10,
-    marginVertical: 5,
   },
-  nearbyPlaceName: { fontSize: 16, fontFamily: 'outfit-Bold' },
-  nearbyPlaceVicinity: { fontSize: 14, color: 'gray' },
-  suggestionItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    backgroundColor: '#f9f9f9',
-  },
-  suggestionText: { fontSize: 16 },
-  placeDetailsContainer: { padding: 20, backgroundColor: '#fff' },
-  placeDetailImage: { width: '100%', height: 200, borderRadius: 10 },
-  placeDetailName: { fontSize: 24, fontFamily: 'outfit-Bold', marginVertical: 10 },
-  placeDetailRating: { fontSize: 16, color: 'gray' },
-  placeDetailAddress: { fontSize: 16 },
-  placeDetailDescription: { fontSize: 14, marginVertical: 10 },
+  icon: { marginRight: 10 },
+  input: { flex: 1, fontSize: 16 },
+  listItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#ddd' },
+  listItemText: { fontSize: 16 },
+  detailsContainer: { padding: 20 },
+  image: { width: '100%', height: 200, borderRadius: 10, marginBottom: 10 },
+  title: { fontSize: 24, marginBottom: 10 },
+  subtitle: { fontSize: 16, color: 'gray' },
+  rating: { fontSize: 14, color: '#333', marginBottom: 10 },
+  website: { fontSize: 14, color: '#0000EE', textDecorationLine: 'underline' },
+  sectionTitle: { fontSize: 18, marginTop: 20 },
+  text: { fontSize: 14, color: 'gray' },
+  backButton: { position: 'absolute', top: 20, left: 20, zIndex: 10 },
+  nearbyContainer: { padding: 20 },
 });

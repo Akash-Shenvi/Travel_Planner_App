@@ -35,7 +35,8 @@ export default function Explore() {
           <Ionicons name="ticket-outline" size={24} color="black" />
           <Text style={styles.categoryText}>Things to do</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryButton}>
+        <TouchableOpacity style={styles.categoryButton}
+        onPress={() => router.push('Home/Restaurants')}>
           <Ionicons name="restaurant-outline" size={24} color="black" />
           <Text style={styles.categoryText}>Restaurants</Text>
         </TouchableOpacity>
