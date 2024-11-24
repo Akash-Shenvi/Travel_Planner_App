@@ -9,29 +9,38 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
-import { useNavigation } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 
 const GOOGLE_API_KEY = 'AlzaSyhBE3HB6gaH5W13dDCCjCpkv24AfQD_lWW'; // Replace with your actual API key
 
 export default function HotelSearchScreen() {
+  // State Hooks
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
   const [hotels, setHotels] = useState([]);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [loading, setLoading] = useState(false);
+
   const navigation = useNavigation();
 
+  // Effect Hook to hide the header on mount
   useEffect(() => {
     navigation.setOptions({ headerShown: false });
   }, [navigation]);
 
+  // Effect Hook to fetch city suggestions
   useEffect(() => {
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
     const fetchSuggestions = async () => {
-      if (query.length < 3) return;
       try {
         const response = await axios.get('https://maps.gomaps.pro/maps/api/place/autocomplete/json', {
           params: {
@@ -41,16 +50,17 @@ export default function HotelSearchScreen() {
             language: 'en',
           },
         });
-        setSuggestions(response.data.predictions);
+        setSuggestions(response.data.predictions || []);
       } catch (error) {
         console.error('Error fetching city suggestions:', error);
       }
     };
 
     const debounceFetch = setTimeout(fetchSuggestions, 300);
-    return () => clearTimeout(debounceFetch);
+    return () => clearTimeout(debounceFetch); // Cleanup to avoid race conditions
   }, [query]);
 
+  // Fetch hotels for the selected city
   const handleSelectCity = async (city) => {
     setLoading(true);
     try {
@@ -71,6 +81,7 @@ export default function HotelSearchScreen() {
     }
   };
 
+  // Fetch nearby hotels
   const fetchHotels = async (location) => {
     try {
       const response = await axios.get('https://maps.gomaps.pro/maps/api/place/nearbysearch/json', {
@@ -81,12 +92,26 @@ export default function HotelSearchScreen() {
           key: GOOGLE_API_KEY,
         },
       });
-      setHotels(response.data.results);
+      setHotels(response.data.results || []);
     } catch (error) {
       console.error('Error fetching hotels:', error);
     }
   };
 
+  // Fetch Wikipedia summary for a hotel
+  const fetchWikipediaSummary = async (hotelName) => {
+    try {
+      const response = await axios.get(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hotelName)}`
+      );
+      return response.data.extract || 'No description available on Wikipedia.';
+    } catch (error) {
+      console.error('Error fetching Wikipedia summary:', error);
+      return 'No description available on Wikipedia.';
+    }
+  };
+
+  // Fetch hotel details when selected
   const handleSelectHotel = async (hotel) => {
     setLoading(true);
     try {
@@ -94,13 +119,15 @@ export default function HotelSearchScreen() {
         params: {
           place_id: hotel.place_id,
           key: GOOGLE_API_KEY,
-          fields: 'name,formatted_address,rating,photos,types,opening_hours,website,editorial_summary',
+          fields: 'name,formatted_address,rating,photos,types,website',
         },
       });
       const details = response.data.result;
       const photos = details.photos?.map((photo) => ({
-        uri: `https://maps.gomaps.pro/maps/api/place/photo?maxwidth=400&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`,
+        uri: `https://maps.gomaps.pro/maps/api/place/photo?maxwidth=800&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`,
       }));
+      const summary = await fetchWikipediaSummary(details.name);
+
       setSelectedHotel({
         name: details.name,
         address: details.formatted_address,
@@ -108,7 +135,7 @@ export default function HotelSearchScreen() {
         photos: photos || [],
         types: details.types || [],
         website: details.website || 'No website available',
-        summary: details.editorial_summary?.overview || 'No description available',
+        summary,
       });
     } catch (error) {
       console.error('Error fetching hotel details:', error);
@@ -117,6 +144,7 @@ export default function HotelSearchScreen() {
     }
   };
 
+  // Navigate back
   const handleBack = () => {
     if (selectedHotel) {
       setSelectedHotel(null);
@@ -129,6 +157,14 @@ export default function HotelSearchScreen() {
     }
   };
 
+  // Open website
+  const openWebsite = (url) => {
+    if (url !== 'No website available') {
+      Linking.openURL(url).catch((err) => console.error('Failed to open URL:', err));
+    }
+  };
+
+  // Render UI
   return (
     <View style={styles.container}>
       {loading ? (
@@ -146,7 +182,9 @@ export default function HotelSearchScreen() {
           <Text style={styles.title}>{selectedHotel.name}</Text>
           <Text style={styles.subtitle}>{selectedHotel.address}</Text>
           <Text style={styles.rating}>Rating: {selectedHotel.rating || 'N/A'}</Text>
-          <Text style={styles.website}>Website: {selectedHotel.website}</Text>
+          <TouchableOpacity onPress={() => openWebsite(selectedHotel.website)}>
+            <Text style={styles.website}>Website: {selectedHotel.website}</Text>
+          </TouchableOpacity>
           <Text style={styles.summary}>{selectedHotel.summary}</Text>
         </View>
       ) : selectedCity ? (
@@ -207,26 +245,19 @@ const styles = StyleSheet.create({
   header: { padding: 20, backgroundColor: '#4CAF50' },
   headerText: { fontSize: 20, color: '#fff', fontWeight: 'bold' },
   searchContainer: { padding: 20 },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    padding: 10,
-    backgroundColor: '#f2f2f2',
-    borderRadius: 10,
-  },
-  icon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 16 },
-  listItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#ddd' },
+  searchBox: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+  input: { flex: 1, borderBottomWidth: 1, borderBottomColor: 'gray', marginLeft: 10 },
+  icon: { marginLeft: 10 },
+  listContainer: { flex: 1, padding: 20 },
+  listItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ddd' },
   listItemText: { fontSize: 16 },
-  detailsContainer: { padding: 20 },
-  photosContainer: { flexDirection: 'row', marginBottom: 10 },
-  image: { width: 200, height: 150, borderRadius: 10, marginRight: 10 },
-  title: { fontSize: 24, marginBottom: 10 },
-  subtitle: { fontSize: 16, color: 'gray' },
-  rating: { fontSize: 14, color: '#333', marginVertical: 5 },
-  website: { fontSize: 14, color: '#0000EE', textDecorationLine: 'underline' },
-  summary: { fontSize: 16, marginVertical: 10 },
-  backButton: { margin: 10 },
-  listContainer: { padding: 20 },
+  detailsContainer: { flex: 1, padding: 20 },
+  photosContainer: { height: 200, marginBottom: 10 },
+  image: { width: 300, height: 200, marginRight: 10, borderRadius: 10 },
+  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
+  subtitle: { fontSize: 18, marginBottom: 10, color: 'gray' },
+  rating: { fontSize: 16, marginBottom: 10 },
+  website: { fontSize: 16, marginBottom: 10, color: '#4CAF50', textDecorationLine: 'underline' },
+  summary: { fontSize: 16, marginTop: 10 },
+  backButton: { marginBottom: 20 },
 });

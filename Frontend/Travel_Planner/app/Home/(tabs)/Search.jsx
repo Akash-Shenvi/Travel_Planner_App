@@ -9,6 +9,8 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Dimensions,
+  Modal,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
@@ -22,6 +24,7 @@ export default function SearchScreen() {
   const [selectedCity, setSelectedCity] = useState(null);
   const [nearbyAttractions, setNearbyAttractions] = useState([]);
   const [selectedAttraction, setSelectedAttraction] = useState(null);
+  const [wikipediaDescription, setWikipediaDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation();
 
@@ -57,7 +60,7 @@ export default function SearchScreen() {
         params: {
           place_id: city.place_id,
           key: GOOGLE_API_KEY,
-          fields: 'geometry', // Get city location details
+          fields: 'geometry',
         },
       });
       const location = response.data.result.geometry.location;
@@ -75,8 +78,9 @@ export default function SearchScreen() {
       const response = await axios.get('https://maps.gomaps.pro/maps/api/place/nearbysearch/json', {
         params: {
           location: `${location.lat},${location.lng}`,
-          radius: 5000, // Radius in meters
-          type: 'tourist_attraction', // Attractions only
+          radius: 5000,
+          type: 'tourist_attraction',
+          keyword: 'temple|beach', // Filter for temples and beaches
           key: GOOGLE_API_KEY,
         },
       });
@@ -85,6 +89,18 @@ export default function SearchScreen() {
       console.error('Error fetching nearby attractions:', error);
     }
   };
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
+const [selectedPhoto, setSelectedPhoto] = useState(null);
+
+const openPhotoModal = (photo) => {
+  setSelectedPhoto(photo);
+  setPhotoModalVisible(true);
+};
+
+const closePhotoModal = () => {
+  setPhotoModalVisible(false);
+  setSelectedPhoto(null);
+};
 
   const handleSelectAttraction = async (attraction) => {
     setLoading(true);
@@ -93,23 +109,23 @@ export default function SearchScreen() {
         params: {
           place_id: attraction.place_id,
           key: GOOGLE_API_KEY,
-          fields: 'name,formatted_address,rating,photos,types,opening_hours,website', // Attraction details
+          fields: 'name,formatted_address,rating,photos,types,opening_hours,website',
         },
       });
       const details = response.data.result;
-      const photoRef = details.photos?.[0]?.photo_reference;
-      const photoUrl = photoRef
-        ? `https://maps.gomaps.pro/maps/api/place/photo?maxwidth=400&photo_reference=${photoRef}&key=${GOOGLE_API_KEY}`
-        : 'https://via.placeholder.com/400';
+      const photos = details.photos?.map((photo) => {
+        return `https://maps.gomaps.pro/maps/api/place/photo?maxwidth=800&photo_reference=${photo.photo_reference}&key=${GOOGLE_API_KEY}`;
+      });
       setSelectedAttraction({
         name: details.name,
         address: details.formatted_address,
         rating: details.rating,
-        photoUrl,
+        photos: photos || ['https://via.placeholder.com/800'],
         types: details.types || [],
         openingHours: details.opening_hours?.weekday_text || [],
         website: details.website || 'No website available',
       });
+      fetchWikipediaDescription(details.name); // Fetch description from Wikipedia
     } catch (error) {
       console.error('Error fetching attraction details:', error);
     } finally {
@@ -117,9 +133,45 @@ export default function SearchScreen() {
     }
   };
 
+  const fetchWikipediaDescription = async (title) => {
+  try {
+    const response = await axios.get(
+      'https://en.wikipedia.org/w/api.php',
+      {
+        params: {
+          action: 'query',
+          format: 'json',
+          prop: 'extracts',
+          titles: title,
+          exintro: true, // Fetch only the introductory part
+          explaintext: true, // Get plain text without HTML
+          origin: '*', // Enable CORS
+        },
+      }
+    );
+
+    // Extract page information
+    const pages = response.data.query?.pages || {};
+    const pageKey = Object.keys(pages)[0];
+    const page = pages[pageKey];
+
+    // Handle missing description or page
+    if (pageKey === '-1' || !page?.extract) {
+      setWikipediaDescription('No description available for this location on Wikipedia.');
+    } else {
+      setWikipediaDescription(page.extract);
+    }
+  } catch (error) {
+    console.error('Error fetching Wikipedia description:', error);
+    setWikipediaDescription('Failed to fetch description. Please try again later.');
+  }
+};
+
+
   const handleBack = () => {
     if (selectedAttraction) {
       setSelectedAttraction(null);
+      setWikipediaDescription('');
     } else if (selectedCity) {
       setSelectedCity(null);
       setNearbyAttractions([]);
@@ -139,11 +191,17 @@ export default function SearchScreen() {
             <TouchableOpacity onPress={handleBack} style={styles.backButton}>
               <FontAwesome name="arrow-left" size={20} color="#4CAF50" />
             </TouchableOpacity>
-            <Image source={{ uri: selectedAttraction.photoUrl }} style={styles.image} />
+            <ScrollView horizontal pagingEnabled>
+              {selectedAttraction.photos.map((photo, index) => (
+                <Image key={index} source={{ uri: photo }} style={styles.image} />
+              ))}
+            </ScrollView>
             <Text style={styles.title}>{selectedAttraction.name}</Text>
             <Text style={styles.subtitle}>{selectedAttraction.address}</Text>
             <Text style={styles.rating}>Rating: {selectedAttraction.rating || 'N/A'}</Text>
             <Text style={styles.website}>Website: {selectedAttraction.website}</Text>
+            <Text style={styles.sectionTitle}>Description:</Text>
+            <Text style={styles.text}>{wikipediaDescription}</Text>
             {selectedAttraction.openingHours.length > 0 && (
               <>
                 <Text style={styles.sectionTitle}>Opening Hours:</Text>
@@ -208,30 +266,129 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  scrollContainer: { flexGrow: 1 },
-  header: { padding: 20, backgroundColor: '#4CAF50' },
-  headerText: { fontSize: 20, color: '#fff' },
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa', // Light background
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingBottom: 20, // Ensure scrollable content doesn't cut off
+  },
+  header: {
+    padding: 20,
+    backgroundColor: '#4CAF50', // Green header
+    alignItems: 'center',
+  },
+  headerText: {
+    fontSize: 24,
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
     margin: 20,
-    padding: 10,
-    backgroundColor: '#f2f2f2',
+    padding: 12,
+    backgroundColor: '#e9ecef', // Subtle gray
     borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2, // Shadow for Android
   },
-  icon: { marginRight: 10 },
-  input: { flex: 1, fontSize: 16 },
-  listItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#ddd' },
-  listItemText: { fontSize: 16 },
-  detailsContainer: { padding: 20 },
-  image: { width: '100%', height: 200, borderRadius: 10, marginBottom: 10 },
-  title: { fontSize: 24, marginBottom: 10 },
-  subtitle: { fontSize: 16, color: 'gray' },
-  rating: { fontSize: 14, color: '#333', marginBottom: 10 },
-  website: { fontSize: 14, color: '#0000EE', textDecorationLine: 'underline' },
-  sectionTitle: { fontSize: 18, marginTop: 20 },
-  text: { fontSize: 14, color: 'gray' },
-  backButton: { position: 'absolute', top: 20, left: 20, zIndex: 10 },
-  nearbyContainer: { padding: 20 },
+  icon: {
+    marginHorizontal: 10,
+    color: '#6c757d', // Subtle gray
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#495057', // Darker text
+  },
+  listItem: {
+    padding: 15,
+    marginHorizontal: 10,
+    marginVertical: 5,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  listItemText: {
+    fontSize: 16,
+    color: '#212529',
+  },
+  backButton: {
+    margin: 10,
+    padding: 10,
+    borderRadius: 50,
+    backgroundColor: '#4CAF50',
+    alignSelf: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    margin: 10,
+    color: '#343a40',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6c757d',
+    marginHorizontal: 10,
+  },
+  text: {
+    fontSize: 14,
+    color: '#495057',
+    marginHorizontal: 10,
+    marginVertical: 5,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 10,
+    color: '#4CAF50',
+  },
+  detailsContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  image: {
+    width: Dimensions.get('window').width,
+    height: 250,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  nearbyContainer: {
+    flex: 1,
+    padding: 10,
+  },
+  rating: {
+    fontSize: 16,
+    color: '#ffc107', // Gold color for ratings
+    marginHorizontal: 10,
+  },
+  website: {
+    fontSize: 16,
+    color: '#007bff', // Link blue
+    marginHorizontal: 10,
+    textDecorationLine: 'underline',
+  },
 });
+ 

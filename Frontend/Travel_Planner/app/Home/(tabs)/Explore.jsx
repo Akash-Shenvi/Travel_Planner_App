@@ -1,17 +1,68 @@
+import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation ,useRouter} from 'expo-router';
-import React, { useEffect } from 'react';
+import { useNavigation, useRouter } from 'expo-router';
 
 export default function Explore() {
   const navigation = useNavigation();
   const router = useRouter();
 
-  useEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    });
-  }, [navigation]);
+  const [places] = useState([
+    {
+      id: 1,
+      name: 'Mysore Palace',
+      vicinity: 'Mysore, Karnataka',
+      image: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Mysore_Palace_in_the_evening.jpg',
+    },
+    {
+      id: 2,
+      name: 'Taj Mahal',
+      vicinity: 'Agra, Uttar Pradesh',
+      image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Taj_Mahal_in_March_2004.jpg/1200px-Taj_Mahal_in_March_2004.jpg',
+    },
+    {
+      id: 3,
+      name: 'Hampi',
+      vicinity: 'Hampi, Karnataka',
+      image: 'https://upload.wikimedia.org/wikipedia/commons/0/05/Hampi_virupaksha_temple.jpg',
+    },
+    {
+      id: 4,
+      name: 'Ayodhya',
+      vicinity: 'Ayodhya, Uttar Pradesh',
+      image: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Sarayu_river_Ayodhya.jpg',
+    },
+    {
+      id: 5,
+      name: 'Jaipur City Palace',
+      vicinity: 'Jaipur, Rajasthan',
+      image: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Chandra_Mahal_and_Mubarak_Mahal_%28City_Palace%29.jpg',
+    },
+    {
+      id: 6,
+      name: 'Gateway of India',
+      vicinity: 'Mumbai, Maharashtra',
+      image: 'https://upload.wikimedia.org/wikipedia/commons/4/4e/The_Gateway_of_India.jpg',
+    },
+  ]);
+
+  // Render tourist places
+  const renderTouristPlaces = () => {
+    return places.map((place) => (
+      <TouchableOpacity
+        key={place.id}
+        style={styles.destinationCard}
+        onPress={() => router.push({ pathname: 'Home/PlaceDetails', params: { placeId: place.id } })}
+      >
+        <Image
+          source={{ uri: place.image }}
+          style={styles.destinationImage}
+        />
+        <Text style={styles.destinationTitle}>{place.name}</Text>
+        <Text style={styles.destinationSubtitle}>{place.vicinity}</Text>
+      </TouchableOpacity>
+    ));
+  };
 
   return (
     <View style={styles.container}>
@@ -25,9 +76,7 @@ export default function Explore() {
 
       {/* Explore Categories */}
       <View style={styles.categoriesContainer}>
-        <TouchableOpacity
-        onPress={() => router.push('Home/Hotels')}
-        style={styles.categoryButton}>
+        <TouchableOpacity onPress={() => router.push('Home/Hotels')} style={styles.categoryButton}>
           <Ionicons name="bed-outline" size={24} color="black" />
           <Text style={styles.categoryText}>Hotels</Text>
         </TouchableOpacity>
@@ -35,8 +84,7 @@ export default function Explore() {
           <Ionicons name="ticket-outline" size={24} color="black" />
           <Text style={styles.categoryText}>Things to do</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.categoryButton}
-        onPress={() => router.push('Home/Restaurants')}>
+        <TouchableOpacity onPress={() => router.push('Home/Restaurants')} style={styles.categoryButton}>
           <Ionicons name="restaurant-outline" size={24} color="black" />
           <Text style={styles.categoryText}>Restaurants</Text>
         </TouchableOpacity>
@@ -46,26 +94,10 @@ export default function Explore() {
         </TouchableOpacity>
       </View>
 
-      {/* Location Prompt */}
-      <View style={styles.locationPrompt}>
-        <Image source={{ uri: "https://example.com/location-image.jpg" }} style={styles.locationImage} />
-        <Text style={styles.locationText}>Looking for something nearby?</Text>
-        <Text style={styles.locationSubText}>Mangalore, India</Text>
-        <Ionicons name="arrow-forward-outline" size={24} color="black" style={styles.locationArrow} />
-      </View>
-
-      {/* Destination Carousel */}
-      <Text style={styles.sectionTitle}>Plan your next adventure</Text>
+      {/* Tourist Places Section */}
+      <Text style={styles.sectionTitle}>Famous Tourist Places in India</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-        <View style={styles.destinationCard}>
-          <Image source={{ uri: "https://media.istockphoto.com/id/2169486695/photo/goa-gajah-temple-in-ubud-bali-indonesia.jpg?s=612x612&w=0&k=20&c=Epvosx8NWMb_QPHx84F-0f38_LCGKhTOO2X9MuIWpN0=" }} style={styles.destinationImage} />
-          <Text style={styles.destinationTitle}>Bali</Text>
-          <Text style={styles.destinationSubtitle}>Indonesia</Text>
-        </View>
-        <View style={styles.destinationCard}>
-          <Text style={styles.destinationTitle}>Siena</Text>
-          <Text style={styles.destinationSubtitle}>Italy</Text>
-        </View>
+        {renderTouristPlaces()}
       </ScrollView>
 
       {/* Chatbot Icon */}
@@ -111,33 +143,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 5,
   },
-  locationPrompt: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#F0F0F0',
-    margin: 15,
-    borderRadius: 10,
-  },
-  locationImage: {
-    width: 50,
-    height: 50,
-    borderRadius: 5,
-    marginRight: 10,
-  },
-  locationText: {
-    fontFamily: 'outfit',
-    fontSize: 16,
-    flex: 1,
-  },
-  locationSubText: {
-    fontFamily: 'outfit',
-    fontSize: 14,
-    color: 'gray',
-  },
-  locationArrow: {
-    marginLeft: 5,
-  },
   sectionTitle: {
     fontFamily: 'outfit-Bold',
     fontSize: 20,
@@ -172,7 +177,7 @@ const styles = StyleSheet.create({
   },
   chatbotButton: {
     position: 'absolute',
-    bottom: 70, // Above the tab bar
+    bottom: 70,
     right: 20,
     backgroundColor: 'skyblue',
     borderRadius: 30,
