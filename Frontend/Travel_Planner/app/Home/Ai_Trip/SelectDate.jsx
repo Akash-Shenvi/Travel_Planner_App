@@ -28,7 +28,7 @@ const TravelDates = () => {
          }}
          />
       </View>
-      <TouchableOpacity style={styles.continueButton} onPress={() => router.push('Home/Ai_Trip/SelectDate')}>
+      <TouchableOpacity style={styles.continueButton} onPress={() => router.push('Home/Ai_Trip/budget')}>
         <Text style={styles.continueButtonText}>Continue</Text>
       </TouchableOpacity>
     </View>

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
+import { useNavigation, useRouter } from 'expo-router';
 
 export default function EditProfile() {
   const [name, setName] = useState('');
@@ -26,6 +27,10 @@ export default function EditProfile() {
   const [phone, setPhone] = useState('');
   const [profileImage, setProfileImage] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const navigation = useNavigation();
+  const router = useRouter();
+
+
 
   const indianStates = [
     'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
@@ -43,7 +48,7 @@ export default function EditProfile() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://192.168.235.138:5000/view_profile', {
+      const response = await fetch('http://192.168.57.138:5000/view_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -79,7 +84,7 @@ export default function EditProfile() {
     };
 
     try {
-      const response = await fetch('http://192.168.235.138:5000/update_profile', {
+      const response = await fetch('http://192.168.57.138:5000/update_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData),
@@ -101,7 +106,7 @@ export default function EditProfile() {
 
   const logout = async () => {
     try {
-      const response = await fetch('http://192.168.235.138:5000/logout', {
+      const response = await fetch('http://192.168.57.138:5000/logout', {
         method: 'POST',
         credentials: 'include', // Include cookies if required
         headers: { 'Content-Type': 'application/json' },
@@ -109,6 +114,9 @@ export default function EditProfile() {
       const data = await response.json();
       if (response.ok) {
         Alert.alert('Logged Out', data.message || 'You have been logged out.');
+        setTimeout(() => {
+          router.replace('auth/sign-in');
+        }, 2000);
       } else {
         Alert.alert('Error', data.message || 'Failed to log out.');
       }
@@ -268,7 +276,8 @@ const styles = StyleSheet.create({
     fontFamily: 'outfit',
   },
   editButton: {
-    padding: 8,
+    padding: 10,
+    marginTop:19,
     backgroundColor: '#ccc',
     borderRadius: 4,
   },
@@ -315,24 +324,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 
-
-logoutButton: {
-  marginTop: 24,
-  paddingVertical: 12, 
-  paddingHorizontal: 16, 
-  backgroundColor: '#dc3545', 
-  borderRadius: 8, 
-  alignItems: 'center', 
-  justifyContent: 'center',
-  shadowColor: '#000', 
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.2,
-  shadowRadius: 4,
-  elevation: 5, 
-},
-logoutButtonText: {
-  color: '#fff', 
-  fontWeight: 'bold', 
-  fontSize: 16, 
-},
+  logoutButton: {
+    marginTop: 10,  // Reduced the margin to bring it 
+    marginBottom: 50,
+    paddingVertical: 5, 
+    paddingHorizontal: '15%', // Keep horizontal padding the same for better responsiveness
+    backgroundColor: '#dc3545', 
+    borderRadius: 4, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2, 
+  },
+  logoutButtonText: {
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 25, // Keep the font size fixed for consistency
+  },
 });

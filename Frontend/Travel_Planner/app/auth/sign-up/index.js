@@ -65,7 +65,7 @@ export default function SignUp() {
         phone,
       };
 
-      const response = await axios.post('http://192.168.235.138:5000/signup', requestData);
+      const response = await axios.post('http://192.168.57.138:5000/signup', requestData);
 
       if (response.status === 201) {
         setIsOtpScreen(true);
@@ -85,7 +85,7 @@ export default function SignUp() {
     }
 
     try {
-      const response = await axios.post('http://192.168.235.138:5000/verify_otp', { email, otp });
+      const response = await axios.post('http://192.168.57.138:5000/verify_otp', { email, otp });
 
       if (response.status === 200) {
         setModalVisible(true);

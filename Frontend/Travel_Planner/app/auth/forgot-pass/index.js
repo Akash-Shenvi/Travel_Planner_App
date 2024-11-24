@@ -41,7 +41,7 @@ export default function ForgotPassword() {
     }
 
     try {
-      const response = await fetch('http://192.168.235.138:5000/otpreq', {
+      const response = await fetch('http://192.168.57.138:5000/otpreq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: input }),
@@ -81,7 +81,7 @@ export default function ForgotPassword() {
     }
 
     try {
-      const response = await fetch('http://192.168.235.138:5000/password_reset', {
+      const response = await fetch('http://192.168.57.138:5000/password_reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: input, otp, new_password: newPassword }),

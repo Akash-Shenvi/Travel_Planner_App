@@ -250,13 +250,13 @@ export default function RestaurantSearchScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   loader: { marginTop: '50%' },
-  header: { padding: 20, backgroundColor: '#FF5722' },
-  headerText: { fontSize: 20, color: '#fff', fontWeight: 'bold' },
-  searchContainer: { padding: 20 },
+  header: { padding: 20, backgroundColor: '#8A4DEB', padding:25, alignItems:'center', },
+  headerText: { fontSize: 26, color: '#fff', fontWeight: 'bold' },
+  searchContainer: {  },
   searchBox: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   input: { flex: 1, borderBottomWidth: 1, borderBottomColor: 'gray', marginLeft: 10 },
   icon: { marginLeft: 10 },
-  listContainer: { flex: 1, padding: 20 },
+  listContainer: { flex: 1, padding: 20,marginBottom: 50, },
   listItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ddd' },
   listItemText: { fontSize: 16 },
   detailsContainer: { flex: 1, padding: 20 },
@@ -269,5 +269,21 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginTop: 20 },
   hoursText: { fontSize: 16, color: 'gray', marginTop: 5 },
   summary: { fontSize: 16, marginTop: 10 },
-  backButton: { marginBottom: 20 },
+  backButton: { marginBottom: 20, marginTop: 17, },
+
+    searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 15,
+    padding: 12,
+    backgroundColor: '#e9ecef', // Subtle gray
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2, // Shadow for Android
+  },
 });

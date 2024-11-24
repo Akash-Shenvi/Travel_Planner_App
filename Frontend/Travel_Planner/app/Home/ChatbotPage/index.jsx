@@ -7,29 +7,53 @@ import {
   TextInput,
   FlatList,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
 
 export default function TravelChatbot() {
   const navigation = useNavigation();
-  const [messages, setMessages] = useState([
-    { id: '1', text: 'Hi! How can I assist you today?', sender: 'bot' },
-  ]);
+  const [name, setName] = useState('');
+  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    fetchProfile();
     navigation.setOptions({
       headerShown: true,
       title: 'Travel Chatbot',
       headerStyle: {
-        backgroundColor: '#ff0000',
+        backgroundColor: '#ff6347', // changed to a warmer red
       },
       headerTintColor: '#fff',
     });
   }, [navigation]);
 
+  // Fetch user profile (for dynamic name)
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch('http://192.168.57.138:5000/view_profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setName(data?.profile?.name || 'Guest');
+        setMessages([
+          { id: '1', text: `Hi ${data?.profile?.name || 'Guest'}! How can I assist you today?`, sender: 'bot' }
+        ]);
+      } else {
+        Alert.alert('Error', data.message || 'Failed to fetch profile data');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to fetch profile data');
+    }
+  };
+
+  // Handle sending messages
   const handleSendMessage = async () => {
     if (inputText.trim() === '') return;
 
@@ -120,7 +144,7 @@ export default function TravelChatbot() {
       {/* Loading Indicator */}
       {isLoading && (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#ff0000" />
+          <ActivityIndicator size="large" color="#ff6347" />
         </View>
       )}
     </View>
@@ -130,19 +154,19 @@ export default function TravelChatbot() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f0f0f0', // Changed background color to light gray
     padding: 20,
   },
   chatbotText: {
-    fontSize: 16,
-    fontFamily: 'outfit',
+    fontSize: 18,
+    fontFamily: 'sans-serif-medium',
     marginVertical: 10,
     color: '#333',
     textAlign: 'center',
   },
   chatWindow: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#fff',
     borderRadius: 10,
     padding: 15,
     marginVertical: 20,
@@ -155,11 +179,11 @@ const styles = StyleSheet.create({
     maxWidth: '80%',
   },
   botMessage: {
-    backgroundColor: 'skyblue',
+    backgroundColor: '#e1f5fe', // Light blue background for bot messages
     alignSelf: 'flex-start',
   },
   userMessage: {
-    backgroundColor: '#ffcccc',
+    backgroundColor: '#ffcccb', // Light red background for user messages
     alignSelf: 'flex-end',
   },
   messageText: {
@@ -184,7 +208,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   sendButton: {
-    backgroundColor: '#ff0000',
+    backgroundColor: '#ff6347', // Red send button to match header
     padding: 10,
     borderRadius: 50,
     alignItems: 'center',

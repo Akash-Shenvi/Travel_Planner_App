@@ -267,16 +267,18 @@ const closePhotoModal = () => {
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: 50,
     flex: 1,
     backgroundColor: '#f8f9fa', // Light background
   },
   scrollContainer: {
     flexGrow: 1,
-    paddingBottom: 20, // Ensure scrollable content doesn't cut off
+    paddingBottom: 20,
+    marginBottom: 50, // Ensure scrollable content doesn't cut off
   },
   header: {
     padding: 20,
-    backgroundColor: '#4CAF50', // Green header
+    backgroundColor: '#8A4DEB', // Green header
     alignItems: 'center',
   },
   headerText: {
@@ -287,7 +289,7 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: 20,
+    margin: 10,
     padding: 12,
     backgroundColor: '#e9ecef', // Subtle gray
     borderRadius: 10,
@@ -327,10 +329,11 @@ const styles = StyleSheet.create({
     color: '#212529',
   },
   backButton: {
-    margin: 10,
+    margin: 17,
     padding: 10,
-    borderRadius: 50,
-    backgroundColor: '#4CAF50',
+    borderRadius: 15,
+    marginLeft: 1,
+    
     alignSelf: 'flex-start',
     alignItems: 'center',
     justifyContent: 'center',

@@ -240,11 +240,19 @@ export default function HotelSearchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: {
+    marginBottom: 50,
+    flex: 1,
+    backgroundColor: '#f8f9fa', // Light background
+  },
   loader: { marginTop: '50%' },
-  header: { padding: 20, backgroundColor: '#4CAF50' },
-  headerText: { fontSize: 20, color: '#fff', fontWeight: 'bold' },
-  searchContainer: { padding: 20 },
+   header: {
+    padding: 20,
+    backgroundColor: '#8A4DEB', // Green header
+    alignItems: 'center',
+  },
+  headerText: { fontSize: 26, color: '#fff', fontWeight: 'bold' },
+  searchContainer: { },
   searchBox: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   input: { flex: 1, borderBottomWidth: 1, borderBottomColor: 'gray', marginLeft: 10 },
   icon: { marginLeft: 10 },
@@ -260,4 +268,20 @@ const styles = StyleSheet.create({
   website: { fontSize: 16, marginBottom: 10, color: '#4CAF50', textDecorationLine: 'underline' },
   summary: { fontSize: 16, marginTop: 10 },
   backButton: { marginBottom: 20 },
+
+    searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    margin: 20,
+    padding: 12,
+    backgroundColor: '#e9ecef', // Subtle gray
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2, // Shadow for Android
+  },
 });
