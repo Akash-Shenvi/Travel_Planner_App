@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRouter } from 'expo-router';
 
@@ -7,57 +7,67 @@ export default function Explore() {
   const navigation = useNavigation();
   const router = useRouter();
 
-  const [places] = useState([
-    {
-      id: 1,
-      name: 'Mysore Palace',
-      vicinity: 'Mysore, Karnataka',
-      image: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Mysore_Palace_in_the_evening.jpg',
-    },
-    {
-      id: 2,
-      name: 'Taj Mahal',
-      vicinity: 'Agra, Uttar Pradesh',
-      image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Taj_Mahal_in_March_2004.jpg/1200px-Taj_Mahal_in_March_2004.jpg',
-    },
-    {
-      id: 3,
-      name: 'Hampi',
-      vicinity: 'Hampi, Karnataka',
-      image: 'https://upload.wikimedia.org/wikipedia/commons/0/05/Hampi_virupaksha_temple.jpg',
-    },
-    {
-      id: 4,
-      name: 'Ayodhya',
-      vicinity: 'Ayodhya, Uttar Pradesh',
-      image: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Sarayu_river_Ayodhya.jpg',
-    },
-    {
-      id: 5,
-      name: 'Jaipur City Palace',
-      vicinity: 'Jaipur, Rajasthan',
-      image: 'https://upload.wikimedia.org/wikipedia/commons/3/39/Chandra_Mahal_and_Mubarak_Mahal_%28City_Palace%29.jpg',
-    },
-    {
-      id: 6,
-      name: 'Gateway of India',
-      vicinity: 'Mumbai, Maharashtra',
-      image: 'https://upload.wikimedia.org/wikipedia/commons/4/4e/The_Gateway_of_India.jpg',
-    },
-  ]);
+  const [places, setPlaces] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Fetch data from Google Places API
+    const fetchPlaces = async () => {
+      try {
+        const response = await fetch(
+          'https://maps.gomaps.pro/maps/api/place/textsearch/json?query=famous+tourist+places+in+India&key=AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'
+        );
+        const data = await response.json();
+        if (data.results) {
+          const formattedPlaces = data.results.map((place) => ({
+            id: place.place_id,
+            name: place.name,
+            vicinity: place.formatted_address,
+            image: place.photos
+              ? 'https://maps.gomaps.pro/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'
+              : 'https://via.placeholder.com/400x300.png?text=Image+Not+Available',
+            description: place.business_status || 'Description not available',
+          }));
+          setPlaces(formattedPlaces);
+        } else {
+          console.error('No results found in the API response:', data);
+        }
+      } catch (error) {
+        console.error('Error fetching places:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlaces();
+  }, []);
 
   // Render tourist places
   const renderTouristPlaces = () => {
+    if (loading) {
+      return <ActivityIndicator size="large" color="#0000ff" />;
+    }
+
+    if (places.length === 0) {
+      return <Text style={styles.errorText}>No places found.</Text>;
+    }
+
     return places.map((place) => (
       <TouchableOpacity
         key={place.id}
         style={styles.destinationCard}
-        onPress={() => router.push({ pathname: 'Home/PlaceDetails', params: { placeId: place.id } })}
+        onPress={() =>
+          router.push({
+            pathname: 'Home/PlaceDetails',
+            params: {
+              placeId: place.id,
+              placeName: place.name,
+              placeImage: place.image,
+              placeDescription: place.description,
+            },
+          })
+        }
       >
-        <Image
-          source={{ uri: place.image }}
-          style={styles.destinationImage}
-        />
+        <Image source={{ uri: place.image }} style={styles.destinationImage} />
         <Text style={styles.destinationTitle}>{place.name}</Text>
         <Text style={styles.destinationSubtitle}>{place.vicinity}</Text>
       </TouchableOpacity>
@@ -190,5 +200,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
+  },
+  errorText: {
+    fontSize: 16,
+    color: 'red',
+    textAlign: 'center',
+    marginTop: 20,
   },
 });

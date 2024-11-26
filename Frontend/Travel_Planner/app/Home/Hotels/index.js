@@ -15,7 +15,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
-const GOOGLE_API_KEY = 'AlzaSyhBE3HB6gaH5W13dDCCjCpkv24AfQD_lWW'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'; // Replace with your actual API key
 
 export default function HotelSearchScreen() {
   // State Hooks
@@ -232,9 +232,51 @@ export default function HotelSearchScreen() {
                 <Text style={styles.listItemText}>{item.description}</Text>
               </TouchableOpacity>
             )}
+            
           />
         </View>
       )}
+     {selectedHotel && (
+  <TouchableOpacity
+    style={styles.saveButton}
+    onPress={async () => {
+      try {
+        const response = await axios.post('http://192.168.57.138:5000/saveHotels', {
+          name: selectedHotel.name,
+          location: selectedCity?.location || {}, // Ensure the location is passed correctly
+          photo: selectedHotel.photos[0]?.uri || '', // Handle cases where photos might be unavailable
+          description: selectedHotel.summary || 'No description available', // Use the summary for description
+        });
+        if (response.status === 201) {
+          alert('Hotel saved successfully!');
+        } else {
+          alert('Failed to save the hotel. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error saving hotel:', error);
+        alert('An error occurred while saving the hotel. Please try again later.');
+      }
+    }}
+  >
+    <Text style={styles.saveButtonText}>Save Hotel</Text>
+  </TouchableOpacity>
+)}
+{selectedHotel && (
+  <TouchableOpacity
+      style={styles.navigateButton}
+      onPress={() => {
+        const { lat, lng } = selectedCity?.location || {};
+        if (lat && lng) {
+          const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+          Linking.openURL(url);
+        } else {
+          alert('Location information not available.');
+        }
+      }}
+    >
+      <Text style={styles.navigateButtonText}>Navigate</Text>
+    </TouchableOpacity>
+)}
     </View>
   );
 }
@@ -261,13 +303,13 @@ const styles = StyleSheet.create({
   listItemText: { fontSize: 16 },
   detailsContainer: { flex: 1, padding: 20 },
   photosContainer: { height: 200, marginBottom: 10 },
-  image: { width: 300, height: 200, marginRight: 10, borderRadius: 10 },
+  image: { width: 450, height: 300, marginRight: 10, borderRadius: 10,marginTop: 30 },
   title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
   subtitle: { fontSize: 18, marginBottom: 10, color: 'gray' },
   rating: { fontSize: 16, marginBottom: 10 },
   website: { fontSize: 16, marginBottom: 10, color: '#4CAF50', textDecorationLine: 'underline' },
-  summary: { fontSize: 16, marginTop: 10 },
-  backButton: { marginBottom: 20 },
+  summary: { fontSize: 16, marginTop: 10, marginBottom: 250},
+  backButton: { marginBottom: 10 , marginTop: 15,},
 
     searchBox: {
     flexDirection: 'row',
@@ -284,4 +326,36 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2, // Shadow for Android
   },
+  saveButton: {
+  backgroundColor: '#4CAF50',
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+  alignSelf: 'center',
+  marginVertical: 20,
+},
+saveButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+buttonContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  marginVertical: 20,
+},
+navigateButton: {
+  backgroundColor: '#007bff', // Blue color for the navigate button
+  paddingVertical: 12,
+  marginBottom: 30,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+  alignSelf: 'center',
+},
+navigateButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+
 });

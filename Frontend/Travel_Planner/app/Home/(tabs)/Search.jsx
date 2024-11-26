@@ -15,8 +15,9 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useNavigation } from 'expo-router';
+import { Linking } from 'react-native';
 
-const GOOGLE_API_KEY = 'AlzaSyhBE3HB6gaH5W13dDCCjCpkv24AfQD_lWW'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'; // Replace with your actual API key
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -261,6 +262,43 @@ const closePhotoModal = () => {
           </>
         )}
       </ScrollView>
+      {selectedAttraction && (
+  <TouchableOpacity
+    style={styles.saveButton}
+    onPress={async () => {
+      try {
+        await axios.post('http://192.168.57.138:5000/saveAttraction', {
+          name: selectedAttraction.name,
+          location: selectedCity?.location || {},
+          photo: selectedAttraction.photos[0],
+          description: wikipediaDescription,
+        });
+        alert('Attraction saved successfully!');
+      } catch (error) {
+        console.error('Error saving attraction:', error);
+        alert('Failed to save the attraction. Please try again.');
+      }
+    }}
+  >
+    <Text style={styles.saveButtonText}>Save</Text>
+  </TouchableOpacity>
+)}
+{selectedAttraction && (
+  <TouchableOpacity
+      style={styles.navigateButton}
+      onPress={() => {
+        const { lat, lng } = selectedCity?.location || {};
+        if (lat && lng) {
+          const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+          Linking.openURL(url);
+        } else {
+          alert('Location information not available.');
+        }
+      }}
+    >
+      <Text style={styles.navigateButtonText}>Navigate</Text>
+    </TouchableOpacity>
+)}
     </View>
   );
 }
@@ -393,5 +431,37 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     textDecorationLine: 'underline',
   },
+  saveButton: {
+  backgroundColor: '#4CAF50',
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+  alignSelf: 'center',
+  marginVertical: 20,
+},
+saveButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+buttonContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+  marginVertical: 20,
+},
+navigateButton: {
+  backgroundColor: '#007bff', // Blue color for the navigate button
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  marginBottom: 30,
+  borderRadius: 8,
+  alignSelf: 'center',
+},
+navigateButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+
 });
  

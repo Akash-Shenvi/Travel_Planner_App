@@ -10,7 +10,7 @@ import logging
 import os
 import google.generativeai as genai
 from flask_session import Session
-import openai
+
 from flask import Flask, request, jsonify
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'base_data.json'), encoding='utf-8') as fobj:
     api_key = json.load(fobj)['apikey']
@@ -363,6 +363,354 @@ def chat():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@auth.route('/saveAttraction', methods=['POST'])
+def save_attraction():
+    try:
+        # Ensure user is authenticated
+        if 'user_id' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        user_id = session['user_id']
+
+        # Extract data from the request
+        data = request.json
+        name = data.get('name')
+        location = data.get('location', {})  # Default to an empty dictionary if not provided
+        photo = data.get('photo')
+        description = data.get('description')
+
+        # Extract latitude and longitude from location
+        lat = location.get('lat')
+        lng = location.get('lng')
+
+        # Debugging prints (optional)
+        print(f"Name: {name}, Location: {lat}, {lng}, Photo: {photo}, Description: {description}")
+
+        # Validate required fields
+        if not name or lat is None or lng is None:
+            return jsonify({'error': 'Name and location (lat, lng) are required fields'}), 400
+
+        # SQL query to insert attraction data
+        query = """
+            INSERT INTO saved_attractions (user_id, name, location_lat, location_lng, photo_url, description)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor_object.execute(query, (user_id, name, lat, lng, photo, description))
+        database.commit()
+
+        return jsonify({'message': 'Attraction saved successfully!'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@auth.route('/saveResturants', methods=['POST'])
+def save_Resturants():
+    try:
+        # Ensure user is authenticated
+        if 'user_id' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        user_id = session['user_id']
+
+        # Extract data from the request
+        data = request.json
+        name = data.get('name')
+        location = data.get('location', {})  # Default to an empty dictionary if not provided
+        photo = data.get('photo')
+        description = data.get('description')
+
+        # Extract latitude and longitude from location
+        lat = location.get('lat')
+        lng = location.get('lng')
+
+        # Debugging prints (optional)
+        print(f"Name: {name}, Location: {lat}, {lng}, Photo: {photo}, Description: {description}")
+
+        # Validate required fields
+        if not name or lat is None or lng is None:
+            return jsonify({'error': 'Name and location (lat, lng) are required fields'}), 400
+
+        # SQL query to insert attraction data
+        query = """
+            INSERT INTO saved_resturants (user_id, name, location_lat, location_lng, photo_url, description)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor_object.execute(query, (user_id, name, lat, lng, photo, description))
+        database.commit()
+
+        return jsonify({'message': 'Attraction saved successfully!'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@auth.route('/saveHotels', methods=['POST'])
+def save_Hotels():
+    try:
+        # Ensure user is authenticated
+        if 'user_id' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+
+        user_id = session['user_id']
+
+        # Extract data from the request
+        data = request.json
+        name = data.get('name')
+        location = data.get('location', {})  # Default to an empty dictionary if not provided
+        photo = data.get('photo')
+        description = data.get('description')
+
+        # Extract latitude and longitude from location
+        lat = location.get('lat')
+        lng = location.get('lng')
+
+        # Debugging prints (optional)
+        print(f"Name: {name}, Location: {lat}, {lng}, Photo: {photo}, Description: {description}")
+
+        # Validate required fields
+        if not name or lat is None or lng is None:
+            return jsonify({'error': 'Name and location (lat, lng) are required fields'}), 400
+
+        # SQL query to insert attraction data
+        query = """
+            INSERT INTO saved_Hotels (user_id, name, location_lat, location_lng, photo_url, description)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        cursor_object.execute(query, (user_id, name, lat, lng, photo, description))
+        database.commit()
+
+        return jsonify({'message': 'Attraction saved successfully!'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+    
+@auth.route('/getAttractions', methods=['POST'])
+def get_attractions():
+    """
+    Endpoint to fetch attractions data for the currently logged-in user.
+    """
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    user_id = session['user_id']  # Get the user ID from the session
+
+    try:
+        # Query to fetch attractions linked to the current user
+        query = """
+            SELECT 
+                
+                name,
+                location_lat,
+                location_lng,
+                photo_url,
+                description
+            FROM saved_attractions
+            WHERE user_id = %s
+        """
+        cursor_object.execute(query, (user_id,))
+        attractions = cursor_object.fetchall()
+        
+
+        # Map the query results to a list of dictionaries
+        attractions_list = [
+            {
+                "name": attraction[0],
+                "latitude": attraction[1],
+                "longitude": attraction[2],
+                "photo": attraction[3],
+                "description": attraction[4],
+                
+            }
+            for attraction in attractions
+        ]
+
+        return jsonify({"attractions": attractions_list}), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching attractions for user {user_id}: {e}")
+        return jsonify({"error": "Failed to fetch attractions.", "details": str(e)}), 500
+
+
+@auth.route('/getHotels', methods=['POST'])
+def get_Hotels():
+    """
+    Endpoint to fetch attractions data for the currently logged-in user.
+    """
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    user_id = session['user_id']  # Get the user ID from the session
+
+    try:
+        # Query to fetch attractions linked to the current user
+        query = """
+            SELECT 
+                name,
+                location_lat,
+                location_lng,
+                photo_url,
+                description
+            FROM saved_Hotels
+            WHERE user_id = %s
+        """
+        cursor_object.execute(query, (user_id,))
+        attractions = cursor_object.fetchall()
+
+        # Map the query results to a list of dictionaries
+        attractions_list = [
+            {
+                "name": attraction[0],
+                "latitude": attraction[1],
+                "longitude": attraction[2],
+                "photo": attraction[3],
+                "description": attraction[4],
+            }
+            for attraction in attractions
+        ]
+
+        return jsonify({"attractions": attractions_list}), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching attractions for user {user_id}: {e}")
+        return jsonify({"error": "Failed to fetch attractions.", "details": str(e)}), 500
+   
+@auth.route('/getresturants', methods=['POST'])
+def get_resturants():
+    """
+    Endpoint to fetch attractions data for the currently logged-in user.
+    """
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    user_id = session['user_id']  # Get the user ID from the session
+
+    try:
+        # Query to fetch attractions linked to the current user
+        query = """
+            SELECT 
+                
+                name,
+                location_lat,
+                location_lng,
+                photo_url,
+                description
+            FROM saved_resturants
+            WHERE user_id = %s
+        """
+        cursor_object.execute(query, (user_id,))
+        attractions = cursor_object.fetchall()
+
+        # Map the query results to a list of dictionaries
+        attractions_list = [
+            {
+                "name": attraction[0],
+                "latitude": attraction[1],
+                "longitude": attraction[2],
+                "photo": attraction[3],
+                "description": attraction[4],
+                
+            }
+            for attraction in attractions
+        ]
+
+        return jsonify({"attractions": attractions_list}), 200
+
+    except Exception as e:
+        logger.error(f"Error fetching attractions for user {user_id}: {e}")
+        return jsonify({"error": "Failed to fetch attractions.", "details": str(e)}), 500
+    
+@auth.route('/deleteAttraction', methods=['POST'])
+def delete_attraction():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    data = request.json
+    place_name = data.get('name')
+    print(place_name)# Get the place name from the frontend
+    if not place_name:
+        return jsonify({"error": "Place name is required"}), 400
+
+    try:
+        # Find the attraction ID by querying the place name
+        query_get_id = "SELECT id FROM saved_attractions WHERE name = %s AND user_id = %s"
+        cursor_object.execute(query_get_id, (place_name, session['user_id']))
+        attraction_id = cursor_object.fetchone()
+
+        if not attraction_id:
+            return jsonify({"error": "Attraction not found"}), 404
+
+        # Delete the attraction using the retrieved ID
+        query_delete = "DELETE FROM saved_attractions WHERE id = %s AND user_id = %s"
+        cursor_object.execute(query_delete, (attraction_id[0], session['user_id']))
+        database.commit()
+
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error(f"Error deleting attraction: {e}")
+        return jsonify({"error": "Failed to delete attraction."}), 500
+    
+@auth.route('/deleteHotels', methods=['POST'])
+def delete_Hotels():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    data = request.json
+    place_name = data.get('name')
+    print(place_name)# Get the place name from the frontend
+    if not place_name:
+        return jsonify({"error": "Place name is required"}), 400
+
+    try:
+        # Find the attraction ID by querying the place name
+        query_get_id = "SELECT id FROM saved_Hotels WHERE name = %s AND user_id = %s"
+        cursor_object.execute(query_get_id, (place_name, session['user_id']))
+        attraction_id = cursor_object.fetchone()
+
+        if not attraction_id:
+            return jsonify({"error": "Attraction not found"}), 404
+
+        # Delete the attraction using the retrieved ID
+        query_delete = "DELETE FROM saved_Hotels WHERE id = %s AND user_id = %s"
+        cursor_object.execute(query_delete, (attraction_id[0], session['user_id']))
+        database.commit()
+
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error(f"Error deleting attraction: {e}")
+        return jsonify({"error": "Failed to delete attraction."}), 500
+    
+    
+@auth.route('/deleteresto', methods=['POST'])
+def delete_Restro():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    data = request.json
+    place_name = data.get('name')
+    print(place_name)# Get the place name from the frontend
+    if not place_name:
+        return jsonify({"error": "Place name is required"}), 400
+
+    try:
+        # Find the attraction ID by querying the place name
+        query_get_id = "SELECT id FROM saved_resturants WHERE name = %s AND user_id = %s"
+        cursor_object.execute(query_get_id, (place_name, session['user_id']))
+        attraction_id = cursor_object.fetchone()
+
+        if not attraction_id:
+            return jsonify({"error": "Attraction not found"}), 404
+
+        # Delete the attraction using the retrieved ID
+        query_delete = "DELETE FROM saved_resturants WHERE id = %s AND user_id = %s"
+        cursor_object.execute(query_delete, (attraction_id[0], session['user_id']))
+        database.commit()
+
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        logger.error(f"Error deleting attraction: {e}")
+        return jsonify({"error": "Failed to delete attraction."}), 500
+
 
 
 # Register the blueprint

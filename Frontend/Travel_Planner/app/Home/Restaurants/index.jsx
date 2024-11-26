@@ -15,7 +15,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
-const GOOGLE_API_KEY = 'AlzaSyhBE3HB6gaH5W13dDCCjCpkv24AfQD_lWW'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'; // Replace with your actual API key
 
 export default function RestaurantSearchScreen() {
   // State Hooks
@@ -243,6 +243,43 @@ export default function RestaurantSearchScreen() {
           />
         </View>
       )}
+      {selectedRestaurant && (
+  <TouchableOpacity
+    style={styles.saveButton}
+    onPress={async () => {
+      try {
+        await axios.post('http://192.168.57.138:5000/saveResturants', {
+          name: selectedRestaurant.name,
+          location: selectedCity?.location || {}, // Fallback to an empty object if no location
+          photo: selectedRestaurant.photos.length > 0 ? selectedRestaurant.photos[0].uri : 'No photo available',
+          description: selectedRestaurant.summary || 'No description available',
+        });
+        alert('Restaurant saved successfully!');
+      } catch (error) {
+        console.error('Error saving restaurant:', error);
+        alert('Failed to save the restaurant. Please try again.');
+      }
+    }}
+  >
+    <Text style={styles.saveButtonText}>Save</Text>
+  </TouchableOpacity>
+)}
+{selectedRestaurant && (
+<TouchableOpacity
+      style={styles.navigateButton}
+      onPress={() => {
+        const { lat, lng } = selectedCity?.location || {};
+        if (lat && lng) {
+          const url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+          Linking.openURL(url);
+        } else {
+          alert('Location information not available.');
+        }
+      }}
+    >
+      <Text style={styles.navigateButtonText}>Navigate</Text>
+    </TouchableOpacity>
+)}
     </View>
   );
 }
@@ -286,4 +323,30 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2, // Shadow for Android
   },
+  saveButton: {
+  backgroundColor: '#4CAF50',
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  borderRadius: 8,
+  alignSelf: 'center',
+  marginVertical: 20,
+},
+saveButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+navigateButton: {
+  backgroundColor: '#007bff', // Blue color for the navigate button
+  paddingVertical: 12,
+  paddingHorizontal: 20,
+  marginBottom: 30,
+  borderRadius: 8,
+  alignSelf: 'center',
+},
+navigateButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
 });

@@ -63,6 +63,10 @@ export default function Plan() {
       </ScrollView>
 
       {/* Action Buttons */}
+      <TouchableOpacity onPress={() => router.push('/Home/Saves')} style={styles.buildTripButton1}>
+        <Ionicons name="add-outline" size={18} color="#8A4DEB"/>
+        <Text style={styles.buildTripText1}>Saves</Text>
+      </TouchableOpacity>
       <TouchableOpacity onPress={openCreateTrip} style={styles.createTripButton}>
         <Ionicons name="add-outline" size={18} color="white" />
         <Text style={styles.createTripText}>Create a Trip</Text>
@@ -195,6 +199,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'outfit-Bold',
   },
- 
+ buildTripButton1: {
+   flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E6E1FF',
+    paddingVertical: 15,
+    borderRadius: 100,
+    marginBottom: 10,
+  },
+  buildTripText1: {
+    color: '#8A4DEB',
+    fontFamily: 'outfit-Bold',
+    fontSize: 16,
+    marginLeft: 5,
+  },
  
 });
