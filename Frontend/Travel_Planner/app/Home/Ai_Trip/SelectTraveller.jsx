@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View,
@@ -9,36 +9,43 @@ import {
   FlatList,
   TextInput,
 } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
 export default function TravelersScreen() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [customTravelers, setCustomTravelers] = useState('');
-    const router = useRouter();
+  const router = useRouter();
+  const params = useLocalSearchParams(); // Retrieve data from the previous screen
+
+  // Log the params when the component is rendered
+  useEffect(() => {
+    console.log('Received Params:', params);
+  }, [params]);
 
   const travelOptions = [
     {
       id: '1',
       title: 'Just Me',
       description: 'A sole traveler in exploration',
-      icon: require('../../../assets/images/plane.png'), // Replace with the correct path
+      icon: require('../../../assets/images/plane.png'),
     },
     {
       id: '2',
       title: 'A Couple',
       description: 'Two travelers in tandem',
-      icon: require('../../../assets/images/couple.png'), // Replace with the correct path
+      icon: require('../../../assets/images/couple.png'),
     },
     {
       id: '3',
       title: 'Family',
       description: 'A group of fun-loving adventurers',
-      icon: require('../../../assets/images/family.png'), // Replace with the correct path
+      icon: require('../../../assets/images/family.png'),
     },
     {
       id: '4',
       title: 'Friends',
       description: 'A bunch of thrill-seekers',
-      icon: require('../../../assets/images/friends.png'), // Replace with the correct path
+      icon: require('../../../assets/images/friends.png'),
     },
   ];
 
@@ -50,15 +57,32 @@ export default function TravelersScreen() {
   };
 
   const handleContinue = () => {
-    if (selectedOption) {
-      const selectedTitle = travelOptions.find((o) => o.id === selectedOption).title;
-      console.log(`Selected Option: ${selectedTitle}`);
-      if (selectedOption === '3' || selectedOption === '4') {
-        console.log(`Number of Travelers: ${customTravelers || 'Not Specified'}`);
-      }
-    }
-    // Add navigation or functionality for "Continue" here
-  };
+  if (selectedOption) {
+    const selectedData = travelOptions.find((o) => o.id === selectedOption);
+    const selectedInfo = {
+      title: selectedData.title,
+      description: selectedData.description,
+      customTravelers:
+        selectedOption === '3' || selectedOption === '4'
+          ? customTravelers
+          : null,
+    };
+
+    console.log('Travelers Screen Data:', selectedInfo);
+
+    // Navigate to the next page and pass all relevant data
+    router.push({
+      pathname: 'Home/Ai_Trip/SelectDate', // Adjust to match your actual route
+      params: {
+        ...params, // Pass existing params (placeName, location, etc.)
+        ...selectedInfo, // Add travelers info
+      },
+    });
+  } else {
+    console.log('No option selected');
+  }
+};
+
 
   return (
     <View style={styles.container}>
@@ -100,7 +124,7 @@ export default function TravelersScreen() {
       />
 
       {/* Continue Button */}
-      <TouchableOpacity style={styles.continueButton} onPress={() => router.push('Home/Ai_Trip/SelectDate')}>
+      <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
         <Text style={styles.continueButtonText}>Continue</Text>
       </TouchableOpacity>
     </View>

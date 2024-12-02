@@ -24,7 +24,7 @@ export default function Explore() {
             name: place.name,
             vicinity: place.formatted_address,
             image: place.photos
-              ? 'https://maps.gomaps.pro/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'
+              ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${place.photos[0].photo_reference}&key=AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV`
               : 'https://via.placeholder.com/400x300.png?text=Image+Not+Available',
             description: place.business_status || 'Description not available',
           }));

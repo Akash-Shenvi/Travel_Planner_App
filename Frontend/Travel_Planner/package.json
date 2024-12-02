@@ -16,6 +16,8 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
+    "@fortawesome/free-solid-svg-icons": "^6.7.1",
+    "@fortawesome/react-fontawesome": "^0.2.2",
     "@react-native-community/datetimepicker": "^8.2.0",
     "@react-native-picker/picker": "^2.9.0",
     "@react-navigation/native": "^6.0.2",

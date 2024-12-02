@@ -89,6 +89,20 @@ const SavedAttractionsScreen = () => {
       Alert.alert('Error', 'An error occurred while deleting the attraction.');
     }
   };
+    const addPlaceToAnotherList = async (name,placeType) => {
+  try {
+    const response = await axios.post(
+      'http://192.168.57.138:5000/add_place',
+      { name, place_type: placeType }, // Use lowercase 'name'
+      { withCredentials: true }
+    );
+    
+    return response.status === 201;
+  } catch (error) {
+    console.error('Error adding place to another list:', error);
+    throw error;
+  }
+};
 
   const renderAttraction = ({ item }) => (
   <View style={styles.card}>
@@ -113,6 +127,20 @@ const SavedAttractionsScreen = () => {
         <TouchableOpacity onPress={() => deleteAttraction(item.name)}>
           <MaterialIcons name="delete" size={24} color="#f00" />
         </TouchableOpacity>
+           <TouchableOpacity
+            onPress={async () => {
+              try {
+                const response = await addPlaceToAnotherList(item.name, 'restaurant', 'saved');
+                if (response) {
+                  Alert.alert('Success', 'Place added successfully.');
+                }
+              } catch (error) {
+                Alert.alert('Error', 'Failed to add place.');
+              }
+            }}
+          >
+            <MaterialIcons name="add-circle-outline" size={24} color="#4caf50" />
+          </TouchableOpacity>
       </View>
     </View>
     <Image source={{ uri: item.photo }} style={styles.image} />

@@ -40,6 +40,8 @@ export default function PlaceSearch() {
 
   const handleSelectPlace = async (place) => {
     try {
+      console.log('Selected Place Name:', place.description); // Print the place name to the console
+
       const response = await axios.get(
         'https://maps.gomaps.pro/maps/api/place/details/json',
         {
@@ -53,12 +55,14 @@ export default function PlaceSearch() {
 
       const placeDetails = response.data.result;
 
-      // Navigate to the next page using router.push
+      console.log('Place Details:', placeDetails); // Print detailed place info to the console
+
+      // Navigate to the next page and pass data
       router.push({
         pathname: 'Home/Ai_Trip/SelectTraveller', // Replace with your target route
         params: {
-          name: place.description,
-          location: placeDetails.geometry.location,
+          name: place.description, // Pass the place name
+          location: JSON.stringify(placeDetails.geometry.location), // Pass the location details
         },
       });
     } catch (error) {

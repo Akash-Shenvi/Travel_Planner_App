@@ -67,9 +67,9 @@ export default function Plan() {
         <Ionicons name="add-outline" size={18} color="#8A4DEB"/>
         <Text style={styles.buildTripText1}>Saves</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={openCreateTrip} style={styles.createTripButton}>
+      <TouchableOpacity onPress={() => router.push('/Home/Create_Trip')} style={styles.createTripButton}>
         <Ionicons name="add-outline" size={18} color="white" />
-        <Text style={styles.createTripText}>Create a Trip</Text>
+        <Text style={styles.createTripText}>Your Trip</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.buildTripButton} onPress={() => router.push('/Home/Ai_Trip')}>
         <Ionicons name="compass-outline" size={18} color="#8A4DEB" />
@@ -77,22 +77,6 @@ export default function Plan() {
       </TouchableOpacity>
 
       {/* Slide-up Create Trip screen */}
-      {isCreateTripVisible && (
-        <Animated.View style={[styles.createTripContainer, { transform: [{ translateY: slideAnim }] }]}>
-          <TouchableOpacity onPress={closeCreateTrip}>
-            <Ionicons name="close-outline" size={30} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.createTripScreenHeader}>Create a Trip</Text>
-          <Text>Trip name</Text>
-          <TextInput placeholder="Ex: Weekend in NYC" style={styles.input} />
-          <TouchableOpacity style={styles.confirmButton}
-          onPress={() => router.push('/Home/Create_Trip')}>
-            <Text style={styles.confirmButtonText}>Create a Trip</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      )}
-
-      
     </View>
   );
 }

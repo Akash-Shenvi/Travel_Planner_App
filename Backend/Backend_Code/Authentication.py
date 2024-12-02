@@ -10,6 +10,7 @@ import logging
 import os
 import google.generativeai as genai
 from flask_session import Session
+import uuid
 
 from flask import Flask, request, jsonify
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'base_data.json'), encoding='utf-8') as fobj:
@@ -34,7 +35,7 @@ generation_config = {
 }
 
 # Initialize the model
-model = genai.GenerativeModel(model_name="gemini-1.5-flash", generation_config=generation_config)
+model = genai.GenerativeModel(model_name="gemini-1.5-flash-8b", generation_config=generation_config)
 
 # Configure Flask-Mail
 app.config['MAIL_SERVER'] = emailinfo.MAIL_SERVER
@@ -51,6 +52,9 @@ mail = Mail(app)
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
 Session(app)
+app.config['MYSQL_POOL_SIZE'] = 10
+app.config['MYSQL_CONNECT_TIMEOUT'] = 300  # Increase timeout
+
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -499,7 +503,7 @@ def get_attractions():
         # Query to fetch attractions linked to the current user
         query = """
             SELECT 
-                
+               
                 name,
                 location_lat,
                 location_lng,
@@ -520,6 +524,7 @@ def get_attractions():
                 "longitude": attraction[2],
                 "photo": attraction[3],
                 "description": attraction[4],
+                # "id":attraction[5],
                 
             }
             for attraction in attractions
@@ -712,6 +717,417 @@ def delete_Restro():
         return jsonify({"error": "Failed to delete attraction."}), 500
 
 
+@auth.route('/generate_trip', methods=['POST'])
+def generate_trip():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    def clean_ai_response(response_text):
+        """
+        Cleans the AI response to remove code block markers like ```json and ```."
+        """
+        if response_text.startswith("```json"):
+            response_text = response_text[len("```json"):].strip()
+        if response_text.endswith("```"):
+            response_text = response_text[:-len("```")].strip()
+        return response_text
+
+    try:
+        # Parse request data
+        data = request.json
+        if not data:
+            return jsonify({"error": "No request data provided"}), 400
+
+        # Define prompt for GeminiAI
+        prompt = """f
+        Create a  travel plan for a {} trip to [Mangalore], starting from [28/11/24 to 1/12/24]. 
+        The plan should consider a [luxury] budget. Provide the output in JSON format compatible with Python.
+        """
+
+        # Generate response from GeminiAI
+        try:
+            chat_session = model.start_chat(history=[])
+            response = chat_session.send_message(prompt)
+            response_text = clean_ai_response(response.text.strip())
+            logging.info(f"Cleaned AI Response: {response_text}")
+
+            # Simply return the cleaned AI response text without further processing
+            return jsonify({"ai_response": response_text}), 200
+
+        except Exception as ai_error:
+            logging.error(f"Error generating AI response: {ai_error}")
+            return jsonify({"error": "Failed to generate trip plan"}), 500
+
+    except Exception as e:
+        logging.error(f"Error generating trip data: {e}")
+        return jsonify({"error": "Failed to generate trip data"}), 500
+
+
+
+#add place part from here 
+@auth.route('/add_place', methods=['POST'])
+def add_place():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    try:
+        data = request.json
+        user_id = session['user_id']
+        place_name = data.get('name')
+        place_type = data.get('place_type')
+
+        if not place_name or not place_type:
+            return jsonify({"error": "Place Name and Place Type are required"}), 400
+
+        # Log incoming data for debugging
+        print(f"Place Name: {place_name}")
+        print(f"Place Type: {place_type}")
+
+        if place_type == 'attraction':
+            query_get_id = "SELECT id FROM saved_attractions WHERE name = %s AND user_id = %s"
+            cursor_object.execute(query_get_id, (place_name, user_id))
+            result = cursor_object.fetchone()
+        elif place_type == 'restaurant':
+            query_get_id = "SELECT id FROM saved_resturants WHERE name = %s AND user_id=%s"
+            cursor_object.execute(query_get_id, (place_name, user_id))
+            result = cursor_object.fetchone()
+        elif place_type == 'hotel':
+            query_get_id = "SELECT id FROM saved_hotels WHERE name = %s AND user_id=%s"
+            cursor_object.execute(query_get_id, (place_name, user_id))
+            result = cursor_object.fetchone()
+        else:
+            return jsonify({"error": "Invalid place type"}), 400
+        if not result:
+            return jsonify({"error": "Place ID not found"}), 404
+
+        place_id = result[0]  # Extract the ID from the tuple
+
+        if place_type == 'attraction':
+            query = "INSERT INTO user_attractions (user_id, attraction_id) VALUES (%s, %s)"
+        elif place_type == 'restaurant':
+            query = "INSERT INTO user_restaurants (user_id, restaurant_id) VALUES (%s, %s)"
+        elif place_type == 'hotel':
+            query = "INSERT INTO user_hotels (user_id, hotel_id) VALUES (%s, %s)"
+        else:
+            return jsonify({"error": "Invalid place type"}), 400
+
+        cursor_object.execute(query, (user_id, place_id))
+        database.commit()
+
+        return jsonify({"message": "Place added successfully"}), 201
+
+    except Exception as e:
+        logging.error(f"Error adding place: {str(e)}")
+        return jsonify({"error": "Failed to add place"}), 500
+
+
+@auth.route('/get_user_places', methods=['GET'])
+def get_user_places():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    try:
+        user_id = session['user_id']
+
+        query = """
+        SELECT 
+            ua.attraction_id AS place_id,
+            sa.name AS place_name,
+            sa.description AS place_description,
+            sa.photo_url AS place_photo_url,
+            
+            'attraction' AS place_type
+        FROM 
+            user_attractions ua
+        INNER JOIN 
+            saved_attractions sa 
+        ON 
+            ua.attraction_id = sa.id
+        WHERE 
+            ua.user_id = %s
+
+        UNION
+
+        SELECT 
+            ur.restaurant_id AS place_id,
+            sr.name AS place_name,
+            sr.description AS place_description,
+            sr.photo_url AS place_photo_url,
+            
+            'restaurant' AS place_type
+        FROM 
+            user_restaurants ur
+        INNER JOIN 
+            saved_resturants sr 
+        ON 
+            ur.restaurant_id = sr.id
+        WHERE 
+            ur.user_id = %s
+
+        UNION
+
+        SELECT 
+            uh.hotel_id AS place_id,
+            sh.name AS place_name,
+            sh.description AS place_description,
+            sh.photo_url AS place_photo_url,
+        
+            'hotel' AS place_type
+        FROM 
+            user_hotels uh
+        INNER JOIN 
+            saved_hotels sh 
+        ON 
+            uh.hotel_id = sh.id
+        WHERE 
+            uh.user_id = %s;
+        """
+
+        cursor_object.execute(query, (user_id, user_id, user_id))
+        places = cursor_object.fetchall()
+
+        return jsonify({"places": places}), 200
+
+    except Exception as e:
+        logging.error(f"Error fetching user places: {e}")
+        return jsonify({"error": "Failed to fetch places"}), 500
+    
+@auth.route('/delete_all_places', methods=['DELETE'])
+def delete_all_places():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+    
+    try:
+        user_id = session['user_id']
+
+        # Execute DELETE queries for each table separately
+        tables = ['user_attractions', 'user_restaurants', 'user_hotels']
+        for table in tables:
+            query = f"DELETE FROM {table} WHERE user_id = %s;"
+            cursor_object.execute(query, (user_id,))
+        
+        database.commit()
+        
+        return jsonify({"message": "All places deleted successfully."}), 200
+    
+    except Exception as e:
+        logging.error(f"Error deleting all places: {e}")
+        database.rollback()  # Rollback any partial changes
+        return jsonify({"error": "Failed to delete all places."}), 500
+@auth.route('/mark_as_visited', methods=['POST'])
+def mark_place_as_visited():
+    """
+    Marks a hotel, restaurant, or attraction as visited for the logged-in user.
+    """
+    try:
+        # Check if user is logged in
+        if 'user_id' not in session:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        user_id = session['user_id']
+        data = request.get_json()
+        place_id = data.get('place_id')
+        place_type = data.get('place_type')  # 'hotel', 'restaurant', or 'attraction'
+        print(place_id)
+        if not place_id or not place_type:
+            return jsonify({'error': 'Place ID and Place Type are required.'}), 400
+
+        # Map place_type to corresponding table and id column
+        table_mapping = {
+            'hotel': ('user_hotels', 'hotel_id'),
+            'restaurant': ('user_restaurants', 'restaurant_id'),
+            'attraction': ('user_attractions', 'attraction_id'),
+        }
+
+        table_info = table_mapping.get(place_type.lower())
+        if not table_info:
+            return jsonify({'error': 'Invalid place type.'}), 400
+
+        table_name, column_id = table_info
+
+        # Debugging logs
+        logging.info(f"Marking as visited: user_id={user_id}, place_id={place_id}, place_type={place_type}, table_name={table_name}")
+
+        # Update the `visited` column in the corresponding table
+        query = f"""
+            UPDATE {table_name}
+            SET visited = 1
+            WHERE user_id = %s AND {column_id} = %s AND visited = 0
+        """
+        cursor_object.execute(query, (user_id, place_id))
+        database.commit()
+
+        # Check if a row was updated
+        if cursor_object.rowcount == 0:
+            logging.warning(f"No rows updated. Either place not found or already marked as visited. user_id={user_id}, place_id={place_id}")
+            return jsonify({'error': 'No matching place found or already marked as visited.'}), 404
+
+        return jsonify({'message': f'{place_type.capitalize()} marked as visited successfully.'}), 200
+
+    except Exception as e:
+        logging.error(f"Error marking place as visited: {str(e)}")
+        return jsonify({'error': 'An error occurred while updating the place status.', 'details': str(e)}), 500
+
+@auth.route('/delete_place', methods=['DELETE'])
+def delete_place():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+    
+    data = request.get_json()
+    place_id = data.get('place_id')
+    place_type = data.get('place_type')
+    
+    if not place_id or not place_type:
+        return jsonify({"error": "Missing place_id or place_type"}), 400
+
+    try:
+        user_id = session['user_id']
+
+        if place_type == 'attraction':
+            query = "DELETE FROM user_attractions WHERE user_id = %s AND attraction_id = %s"
+        elif place_type == 'restaurant':
+            query = "DELETE FROM user_restaurants WHERE user_id = %s AND restaurant_id = %s"
+        elif place_type == 'hotel':
+            query = "DELETE FROM user_hotels WHERE user_id = %s AND hotel_id = %s"
+        else:
+            return jsonify({"error": "Invalid place_type"}), 400
+        
+        cursor_object.execute(query, (user_id, place_id))
+        database.commit()
+
+        return jsonify({"message": "Place deleted successfully."}), 200
+    
+    except Exception as e:
+        logging.error(f"Error deleting place: {e}")
+        return jsonify({"error": "Failed to delete place."}), 500
+    
+@auth.route('/get_user_places_locations', methods=['GET'])
+def get_user_places_locations():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized access"}), 401
+
+    try:
+        user_id = session['user_id']
+        place_id = request.args.get('place_id')  # Get place_id from the frontend
+
+        if not place_id:
+            return jsonify({"error": "Place ID is required"}), 400
+
+        # Query to fetch location based on the place_id for attractions, restaurants, or hotels
+        query = """
+        SELECT 
+            sa.location_lat AS place_latitude,
+            sa.location_lng AS place_longitude,
+            'attraction' AS place_type
+        FROM 
+            user_attractions ua
+        INNER JOIN 
+            saved_attractions sa 
+        ON 
+            ua.attraction_id = sa.id
+        WHERE 
+            ua.user_id = %s
+            AND sa.id = %s
+
+        UNION
+
+        SELECT 
+            sr.location_lat AS place_latitude,
+            sr.location_lng AS place_longitude,
+            'restaurant' AS place_type
+        FROM 
+            user_restaurants ur
+        INNER JOIN 
+            saved_resturants sr 
+        ON 
+            ur.restaurant_id = sr.id
+        WHERE 
+            ur.user_id = %s
+            AND sr.id = %s
+
+        UNION
+
+        SELECT 
+            sh.location_lat AS place_latitude,
+            sh.location_lng AS place_longitude,
+            'hotel' AS place_type
+        FROM 
+            user_hotels uh
+        INNER JOIN 
+            saved_hotels sh 
+        ON 
+            uh.hotel_id = sh.id
+        WHERE 
+            uh.user_id = %s
+            AND sh.id = %s;
+        """
+
+        # Execute the query with user_id and place_id for all three categories
+        cursor_object.execute(query, (user_id, place_id, user_id, place_id, user_id, place_id))
+        location = cursor_object.fetchone()
+
+        if not location:
+            return jsonify({"error": "Place not found"}), 404
+
+        # Format the response for a single location
+        formatted_location = {
+            "latitude": location[0],
+            "longitude": location[1],
+            "place_type": location[2]
+        }
+
+        return jsonify({"location": formatted_location}), 200
+
+    except Exception as e:
+        logging.error(f"Error fetching user place location: {e}")
+        return jsonify({"error": "Failed to fetch location"}), 500
+
+
+@auth.route('/check_place_visited', methods=['GET'])
+def check_place_visited():
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session['user_id']
+    place_id = request.args.get('place_id')
+    place_type = request.args.get('place_type')
+
+    if not place_id or not place_type:
+        return jsonify({"error": "Place ID and type are required"}), 400
+
+    # Define a mapping from place type to table name
+    table_mapping = {
+        'hotel': 'user_hotels',
+        'restaurant': 'user_restaurants',
+        'attraction': 'user_attractions',
+    }
+
+    # Get the appropriate table name
+    table_name = table_mapping.get(place_type.lower())
+    if not table_name:
+        return jsonify({"error": "Invalid place type"}), 400
+
+    try:
+        # Check if the place is marked as visited
+        query = f"""
+            SELECT visited
+            FROM {table_name}
+            WHERE user_id = %s AND {place_type}_id = %s
+        """
+        cursor_object.execute(query, (user_id, place_id))
+        result = cursor_object.fetchone()
+
+        if not result:
+            return jsonify({"error": "Place not found"}), 404
+
+        visited = result[0] 
+        print(visited)# Fetch the "visited" value (0 or 1)
+        return jsonify({"visited": bool(visited)}), 200
+
+    except Exception as e:
+        # Log the error details for debugging
+        print(f"Error checking visited status: {str(e)}")
+        return jsonify({"error": "Failed to check place status", "details": str(e)}), 500
 
 # Register the blueprint
 

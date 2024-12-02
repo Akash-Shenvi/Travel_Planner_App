@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
-   Linking ,
+  Linking,
 } from 'react-native';
 import axios from 'axios';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -59,7 +59,7 @@ const SavedAttractionsScreen = () => {
   const fetchAddress = async (latitude, longitude) => {
     try {
       if (!latitude || !longitude) return 'Coordinates not available';
-      const geocodeUrl = `https://maps.gomaps.pro/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`;
+      const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`;
       const response = await axios.get(geocodeUrl);
       if (response.data.results && response.data.results.length > 0) {
         return response.data.results[0].formatted_address || 'Address not available';
@@ -90,38 +90,67 @@ const SavedAttractionsScreen = () => {
     }
   };
 
+  const addPlaceToAnotherList = async (name,placeType) => {
+  try {
+    const response = await axios.post(
+      'http://192.168.57.138:5000/add_place',
+      { name, place_type: placeType }, // Use lowercase 'name'
+      { withCredentials: true }
+    );
+    
+    return response.status === 201;
+  } catch (error) {
+    console.error('Error adding place to another list:', error);
+    throw error;
+  }
+};
+
   const renderAttraction = ({ item }) => (
-  <View style={styles.card}>
-    <View style={styles.cardHeader}>
-      <Text style={styles.title}>{item.name}</Text>
-      <View style={styles.iconRow}>
-        <TouchableOpacity
-          onPress={() => {
-            if (item.latitude && item.longitude) {
-              const navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`;
-              Linking.openURL(navigationUrl);
-            } else if (item.address) {
-              const navigationUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}`;
-              Linking.openURL(navigationUrl);
-            } else {
-              Alert.alert('Error', 'Location information not available');
-            }
-          }}
-        >
-          <MaterialIcons name="navigation" size={24} color="#007aff" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => deleteAttraction(item.name)}>
-          <MaterialIcons name="delete" size={24} color="#f00" />
-        </TouchableOpacity>
+    <View style={styles.card}>
+      <View style={styles.cardHeader}>
+        <Text style={styles.title}>{item.name}</Text>
+        <View style={styles.iconRow}>
+          <TouchableOpacity
+            onPress={() => {
+              if (item.latitude && item.longitude) {
+                const navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`;
+                Linking.openURL(navigationUrl);
+              } else if (item.address) {
+                const navigationUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}`;
+                Linking.openURL(navigationUrl);
+              } else {
+                Alert.alert('Error', 'Location information not available');
+              }
+            }}
+          >
+            <MaterialIcons name="navigation" size={24} color="#007aff" />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => deleteAttraction(item.name)}>
+            <MaterialIcons name="delete" size={24} color="#f00" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={async () => {
+              try {
+                const response = await addPlaceToAnotherList(item.name, 'attraction', 'saved');
+                if (response) {
+                  Alert.alert('Success', 'Place added successfully.');
+                }
+              } catch (error) {
+                Alert.alert('Error', 'Failed to add place.');
+              }
+            }}
+          >
+            <MaterialIcons name="add-circle-outline" size={24} color="#4caf50" />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Image source={{ uri: item.photo }} style={styles.image} />
+      <View style={styles.cardContent}>
+        <Text style={styles.description}>{item.description}</Text>
+        <Text style={styles.location}>Address: {item.address}</Text>
       </View>
     </View>
-    <Image source={{ uri: item.photo }} style={styles.image} />
-    <View style={styles.cardContent}>
-      <Text style={styles.description}>{item.description}</Text>
-      <Text style={styles.location}>Address: {item.address}</Text>
-    </View>
-  </View>
-);
+  );
 
   if (loading) {
     return (
