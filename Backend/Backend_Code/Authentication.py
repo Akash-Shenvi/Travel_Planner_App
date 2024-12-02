@@ -12,7 +12,9 @@ import google.generativeai as genai
 from flask_session import Session
 import uuid
 
-
+from flask import Flask, request, jsonify
+with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'base_data.json'), encoding='utf-8') as fobj:
+    api_key = json.load(fobj)['apikey']
 
 # Initialize Flask app
 app = Flask(__name__)
