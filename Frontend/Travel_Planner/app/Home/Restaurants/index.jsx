@@ -15,7 +15,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
-const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH'; // Replace with your actual API key
 
 export default function RestaurantSearchScreen() {
   // State Hooks
@@ -248,7 +248,7 @@ export default function RestaurantSearchScreen() {
     style={styles.saveButton}
     onPress={async () => {
       try {
-        await axios.post('http://192.168.57.138:5000/saveResturants', {
+        await axios.post('https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/saveResturants', {
           name: selectedRestaurant.name,
           location: selectedCity?.location || {}, // Fallback to an empty object if no location
           photo: selectedRestaurant.photos.length > 0 ? selectedRestaurant.photos[0].uri : 'No photo available',

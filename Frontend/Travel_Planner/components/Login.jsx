@@ -1,8 +1,8 @@
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image } from 'react-native'; // Added Image import
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, Image } from 'react-native'; 
 import React, { useEffect } from 'react';
 import { useNavigation, useRouter } from 'expo-router';
-import { useFonts } from 'expo-font'; // Import useFonts to load custom fonts
-import AppLoading from 'expo-app-loading'; // Import AppLoading for handling loading state
+import { useFonts } from 'expo-font'; 
+import AppLoading from 'expo-app-loading'; 
 
 export default function Login() {
   const [fontsLoaded] = useFonts({
@@ -12,15 +12,29 @@ export default function Login() {
   });
 
   const navigation = useNavigation();
-  const router = useRouter(); // Remove the duplicate router declaration
+  const router = useRouter();
 
   useEffect(() => {
     navigation.setOptions({
       headerShown: false,
     });
-  }, [navigation]);
 
-  // Handle loading state for fonts
+    // Check session
+    fetch('http://192.168.27.138:5000/check-session', {
+      method: 'GET',
+      credentials: 'include', // Ensure cookies are sent with the request
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.session) {
+          router.replace('/Home'); // Navigate to home page if session exists
+        } else {
+          router.replace('/auth/sign-in'); // Navigate to sign-in page if no session
+        }
+      })
+      .catch((error) => console.error('Error checking session:', error));
+  }, [navigation, router]);
+
   if (!fontsLoaded) {
     return <AppLoading />;
   }
@@ -39,7 +53,7 @@ export default function Login() {
           fontSize: 28,
           fontFamily: 'outfit-Bold',
           textAlign: 'center',
-          marginTop: 30, // Corrected the fontFamily
+          marginTop: 30,
         }}>
           Ai Travel Planner
         </Text>

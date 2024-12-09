@@ -30,7 +30,7 @@ const SavedAttractionsScreen = () => {
   const fetchAttractions = async () => {
     try {
       const response = await axios.post(
-        'http://192.168.57.138:5000/getHotels',
+        'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/getHotels',
         {},
         {
           withCredentials: true, // Ensure cookies/session are sent
@@ -74,7 +74,7 @@ const SavedAttractionsScreen = () => {
   const deleteAttraction = async (name) => {
     try {
       const response = await axios.post(
-        'http://192.168.57.138:5000/deleteHotels',
+        'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/deleteHotels',
         { name },
         { withCredentials: true }
       );
@@ -92,7 +92,7 @@ const SavedAttractionsScreen = () => {
     const addPlaceToAnotherList = async (name,placeType) => {
   try {
     const response = await axios.post(
-      'http://192.168.57.138:5000/add_place',
+      'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/add_place',
       { name, place_type: placeType }, // Use lowercase 'name'
       { withCredentials: true }
     );

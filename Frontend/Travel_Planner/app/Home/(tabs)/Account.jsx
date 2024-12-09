@@ -10,6 +10,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   Alert,
+  Modal,
 } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
@@ -29,6 +30,7 @@ export default function EditProfile() {
   const [isEditing, setIsEditing] = useState(false);
   const navigation = useNavigation();
   const router = useRouter();
+  const [menuVisible, setMenuVisible] = useState(false);
 
 
 
@@ -48,7 +50,7 @@ export default function EditProfile() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://192.168.57.138:5000/view_profile', {
+      const response = await fetch('http://192.168.27.138:5000/view_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -84,7 +86,7 @@ export default function EditProfile() {
     };
 
     try {
-      const response = await fetch('http://192.168.57.138:5000/update_profile', {
+      const response = await fetch('http://192.168.27.138:5000/update_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData),
@@ -106,7 +108,7 @@ export default function EditProfile() {
 
   const logout = async () => {
     try {
-      const response = await fetch('http://192.168.57.138:5000/logout', {
+      const response = await fetch('http://192.168.27.138:5000/logout', {
         method: 'POST',
         credentials: 'include', // Include cookies if required
         headers: { 'Content-Type': 'application/json' },
@@ -125,6 +127,15 @@ export default function EditProfile() {
       Alert.alert('Error', 'Failed to log out. Please try again.');
     }
   };
+  const handleAboutUs = () => {
+  setMenuVisible(false);
+  router.push('/about-us'); // Replace with your actual route for About Us
+};
+
+const handleContactUs = () => {
+  setMenuVisible(false);
+  router.push('/contact-us'); // Replace with your actual route for Contact Us
+};
 
   return (
     <KeyboardAvoidingView
@@ -132,18 +143,42 @@ export default function EditProfile() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => console.log('Back pressed')}>
-            <Ionicons name="arrow-back" size={30} color="black" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Edit Profile</Text>
-          <TouchableOpacity
-            style={[styles.editButton, isEditing && styles.saveButton]}
-            onPress={isEditing ? saveProfile : toggleEdit}
-          >
-            <Text style={styles.editButtonText}>{isEditing ? 'Save' : 'Edit'}</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={styles.header}>
+  
+  <Text style={styles.headerTitle}>Profile</Text>
+  <View style={styles.headerActions}>
+    <TouchableOpacity
+      style={[styles.editButton, isEditing && styles.saveButton]}
+      onPress={isEditing ? saveProfile : toggleEdit}
+    >
+      <Text style={styles.editButtonText}>{isEditing ? 'Save' : 'Edit'}</Text>
+    </TouchableOpacity>
+    <TouchableOpacity onPress={() => setMenuVisible(true)}>
+      <Ionicons name="ellipsis-vertical" size={24} color="black" />
+    </TouchableOpacity>
+  </View>
+</View>
+
+<Modal
+  visible={menuVisible}
+  transparent={true}
+  animationType="fade"
+  onRequestClose={() => setMenuVisible(false)}
+>
+  <TouchableOpacity
+    style={styles.modalOverlay}
+    onPress={() => setMenuVisible(false)}
+  >
+    <View style={styles.menuContainer}>
+      <TouchableOpacity onPress={handleAboutUs} style={styles.menuOption}>
+        <Text style={styles.menuText}>About Us</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={handleContactUs} style={styles.menuOption}>
+        <Text style={styles.menuText}>Contact Us</Text>
+      </TouchableOpacity>
+    </View>
+  </TouchableOpacity>
+</Modal>
 
         <View style={styles.profilePictureContainer}>
           <TouchableOpacity onPress={() => console.log('Change Profile Picture')}>
@@ -254,6 +289,7 @@ export default function EditProfile() {
             <Text style={styles.logoutButtonText}>Log Out</Text>
           </TouchableOpacity>
           </View>
+          
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -272,21 +308,54 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 40,
     fontFamily: 'outfit',
   },
   editButton: {
-    padding: 10,
-    marginTop:19,
-    backgroundColor: '#ccc',
-    borderRadius: 4,
-  },
-  saveButton: {
-    backgroundColor: '#4caf50',
-  },
-  editButtonText: {
-    color: '#fff',
-  },
+  paddingVertical: 10,  // Increased padding for better touch area
+  paddingHorizontal: 20, // More space horizontally for the text
+  marginTop: 16,
+  backgroundColor: '#ccc', // Soft background color
+  borderRadius: 8, // Smooth rounded corners
+  alignItems: 'center', // Center the text inside the button
+  justifyContent: 'center', 
+  shadowColor: '#000', // Subtle shadow effect
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.1,
+  shadowRadius: 6,
+  elevation: 3, // Shadow effect for Android
+  transition: 'background-color 0.3s ease', // Smooth background change transition
+  alignSelf: 'flex-start',
+  marginRight:15, // Align the button to the left side
+},
+saveButton: {
+  backgroundColor: '#4caf50', // Green background for save
+  paddingVertical: 12, // Increased padding for better touch area
+  paddingHorizontal: 20, // More space horizontally for the text
+  borderRadius: 8, // Rounded corners
+  alignItems: 'center', // Center the text inside the button
+  justifyContent: 'center',
+  shadowColor: '#000', // Subtle shadow effect
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.15,
+  shadowRadius: 8,
+  elevation: 5, // Shadow effect for Android
+  transition: 'background-color 0.3s ease', // Smooth background change transition
+  alignSelf: 'flex-start',
+  marginRight:15, // Align the button to the left side
+},
+editButtonText: {
+  fontSize: 16,
+  color: '#fff',
+  fontWeight: '500', // Lighter weight for the text for better readability
+},
+saveButtonText: {
+  fontSize: 16,
+  color: '#fff',
+  fontWeight: 'bold', // Stronger text weight for a more prominent "Save" button
+},
+
+
   profilePictureContainer: {
     alignItems: 'center',
     marginBottom: 16,
@@ -339,9 +408,59 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2, 
   },
+ contactus: {
+    marginBottom: 50,
+    paddingVertical: 10, // Slightly increased for better clickability
+    paddingHorizontal: '20%', // Wider for better touch targets
+    backgroundColor: '#28a745', // Modern green shade
+    borderRadius: 8, // Smooth rounded corners
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000', // Subtle shadow for a floating effect
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 1, // Adds subtle border for visual depth
+    borderColor: '#218838', // Darker shade of green for border
+  },
   logoutButtonText: {
     color: '#fff', 
     fontWeight: 'bold', 
     fontSize: 25, // Keep the font size fixed for consistency
   },
+  
+ headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+    
+  },
+
+  menuContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 16,
+    margin: 16,
+    elevation: 5,
+  },
+
+  menuOption: {
+    paddingVertical: 16,  // Increased vertical padding for larger button
+    paddingHorizontal: 24, // Added horizontal padding for more space
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    marginBottom: 10, // Added margin to separate options
+  },
+
+  menuText: {
+    fontSize: 18,  // Increased font size for better readability
+    color: '#333',
+  },
+
 });

@@ -17,7 +17,7 @@ import axios from 'axios';
 import { useNavigation } from 'expo-router';
 import { Linking } from 'react-native';
 
-const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH'; // Replace with your actual API key
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -267,7 +267,7 @@ const closePhotoModal = () => {
     style={styles.saveButton}
     onPress={async () => {
       try {
-        await axios.post('http://192.168.57.138:5000/saveAttraction', {
+        await axios.post('https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/saveAttraction', {
           name: selectedAttraction.name,
           location: selectedCity?.location || {},
           photo: selectedAttraction.photos[0],

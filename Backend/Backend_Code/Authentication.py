@@ -108,7 +108,7 @@ def signup():
     existing_user = cursor_object.fetchone()
 
     if existing_user:
-        return jsonify({"response": "User already exists"}), 409
+        return jsonify({"message": "User already exists"}), 409
 
     otp = random.randint(100000, 999999)
     otp_storage[email] = {
@@ -124,7 +124,73 @@ def signup():
         sender=emailinfo.MAIL_USERNAME,
         recipients=[email]
     )
-    msg.body = f"Your OTP for registration is {otp}. It will expire in 10 minutes."
+    msg.html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }}
+        .container {{
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }}
+        .header {{
+            font-size: 20px;
+            font-weight: bold;
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 20px;
+        }}
+        .otp {{
+            font-size: 28px;
+            font-weight: bold;
+            color: #d9534f;
+            text-align: center;
+            margin: 20px 0;
+        }}
+        .footer {{
+            font-size: 14px;
+            text-align: center;
+            margin-top: 20px;
+            color: #555;
+        }}
+        a {{
+            color: #0056b3;
+            text-decoration: none;
+        }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">Welcome to AI Travel Planner!</div>
+        <p>Dear {name},</p>
+        <p>Thank you for choosing <strong>AI Travel Planner</strong>. We are excited to have you on board!</p>
+        <p>Your One-Time Password (OTP) for completing your registration is:</p>
+        <div class="otp">{otp}</div>
+        <p>This OTP is valid for <strong>10 minutes</strong>. Please use it promptly to complete your registration process.</p>
+        <p>If you did not request this code, please ignore this email.</p>
+        <p>For any questions or assistance, feel free to reach out to us at <a href="mailto:accmovie906@gmail.com">accmovie906@gmail.com</a>.</p>
+        <p>Warm regards,<br>
+        <strong>The AI Travel Planner Team</strong><br>
+        <em>Personalized journeys, smarter travels</em></p>
+        <div class="footer">
+            &copy; {datetime.datetime.now().year} AI Travel Planner. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>
+"""
 
     try:
         with app.app_context():
@@ -167,6 +233,69 @@ def verify_otp():
         query_insert = "INSERT INTO users (name, email, phone, password) VALUES (%s, %s, %s, %s)"
         cursor_object.execute(query_insert, (name, email, phone, hashed_password))
         database.commit()
+        msg = Message(
+            subject="Welcome to AI Travel Planner!",
+            sender=emailinfo.MAIL_USERNAME,
+            recipients=[email]
+        )
+        msg.html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                }}
+                .container {{
+                    width: 100%;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background-color: #f9f9f9;
+                    border: 1px solid #ddd;
+                    border-radius: 8px;
+                }}
+                .header {{
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: #0056b3;
+                    text-align: center;
+                    margin-bottom: 20px;
+                }}
+                .footer {{
+                    font-size: 14px;
+                    text-align: center;
+                    margin-top: 20px;
+                    color: #555;
+                }}
+                a {{
+                    color: #0056b3;
+                    text-decoration: none;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">Welcome to AI Travel Planner!</div>
+                <p>Dear {name},</p>
+                <p>Congratulations! Your account has been successfully registered with <strong>AI Travel Planner</strong>.</p>
+                <p>We are thrilled to have you on board and look forward to helping you plan your journeys effortlessly.</p>
+                <p>If you have any questions, feel free to reach out to us at <a href="mailto:accmovie906@gmail.com">accmovie906@gmail.com</a>.</p>
+                <p>Warm regards,<br>
+                <strong>The AI Travel Planner Team</strong><br>
+                <em>Personalized journeys, smarter travels</em></p>
+                <div class="footer">
+                    &copy; {datetime.datetime.now().year} AI Travel Planner. All rights reserved.
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        with app.app_context():
+            mail.send(msg)
     except Exception as e:
         logger.error(f"Failed to save user to database: {e}")
         return jsonify({"message": "Failed to save user information to the database."}), 500
@@ -349,10 +478,11 @@ def password_reset():
 @auth.route('/chat', methods=['POST'])
 def chat():
     try:
+        print("hii")
         # Parse user message from the request JSON
         data = request.json
-        user_message = data.get('message', '')
-
+        print(data)
+        user_message = data.get('messege')
         if not user_message:
             return jsonify({"error": "Message is required"}), 400
 
@@ -724,7 +854,7 @@ def generate_trip():
 
     def clean_ai_response(response_text):
         """
-        Cleans the AI response to remove code block markers like ```json and ```."
+        Cleans the AI response to remove code block markers like ```json and ```.
         """
         if response_text.startswith("```json"):
             response_text = response_text[len("```json"):].strip()
@@ -738,10 +868,45 @@ def generate_trip():
         if not data:
             return jsonify({"error": "No request data provided"}), 400
 
+        # Extract trip details from request data
+        name = data.get('name', 'Traveler')  # Default to 'Traveler' if not provided
+        start_date = data.get('startDate', '2024-11-28')  # Default start date
+        end_date = data.get('endDate', '2024-12-01')  # Default end date
+        total_days = data.get('totalDays', 3)  # Default duration
+        title = data.get('title', 'Vacation')  # Default trip title
+        budget = data.get('budget', 'luxury')  # Default to 'luxury' budget
+        print(name,start_date,end_date,total_days,title,budget)
+
         # Define prompt for GeminiAI
-        prompt = """f
-        Create a  travel plan for a {} trip to [Mangalore], starting from [28/11/24 to 1/12/24]. 
-        The plan should consider a [luxury] budget. Provide the output in JSON format compatible with Python.
+        prompt = f"""
+        Create a detailed travel plan for {name} for a {title} trip from {start_date} to {end_date} ({total_days} days). 
+        The plan should consider a {budget} budget and include:
+        - Trip details: destination, dates, budget, and duration.
+        - Daily itinerary: list of activities with descriptions, locations, and estimated costs.
+        - Important notes or recommendations.
+        Output must be in valid JSON format with the following structure:
+        {{
+            "trip_details": {{
+                "destination": "string",
+                "dates": "string",
+                "budget": "string",
+                "duration": "integer"
+            }},
+            "itinerary": [
+                {{
+                    "day": "string",
+                    "activities": [
+                        {{
+                            "description": "string",
+                            "location": "string",
+                            "estimated_cost": "string",
+                            "notes": "string (optional)"
+                        }}
+                    ]
+                }}
+            ],
+            "notes": ["string"]
+        }}
         """
 
         # Generate response from GeminiAI
@@ -751,8 +916,15 @@ def generate_trip():
             response_text = clean_ai_response(response.text.strip())
             logging.info(f"Cleaned AI Response: {response_text}")
 
-            # Simply return the cleaned AI response text without further processing
-            return jsonify({"ai_response": response_text}), 200
+            # Parse the AI response to verify JSON validity
+            try:
+                response_json = json.loads(response_text)
+            except json.JSONDecodeError as json_error:
+                logging.error(f"Invalid JSON format: {json_error}")
+                return jsonify({"error": "AI response is not in valid JSON format"}), 500
+
+            # Return the AI response as JSON
+            return jsonify(response_json), 200
 
         except Exception as ai_error:
             logging.error(f"Error generating AI response: {ai_error}")
@@ -1128,6 +1300,56 @@ def check_place_visited():
         # Log the error details for debugging
         print(f"Error checking visited status: {str(e)}")
         return jsonify({"error": "Failed to check place status", "details": str(e)}), 500
+    
+@auth.route('/check-session', methods=['GET'])
+def check_session():
+    if 'user_id' in session:
+        return jsonify({"session": True, "user_id": session['user_id']}), 200
+    return jsonify({"session": False}), 200
+
+@auth.route('/send-feedback', methods=['POST'])
+def feedback():
+    if 'user_id' not in session:
+        return jsonify({"message": "Unauthorized. Please log in."}), 401
+
+    user_id = session['user_id']
+    data = request.json
+    feedback = data.get('feedback')
+
+    if not feedback:
+        return jsonify({"message": "Feedback is required"}), 400
+
+    try:
+        # Query the database for the user's name and email using user_id
+          # Replace with your database connection function
+        
+        query=f"SELECT name, email FROM users WHERE id = %s"
+        cursor_object.execute(query, (user_id,))
+        result = cursor_object.fetchone()
+
+        if not result:
+            return jsonify({"message": "User not found"}), 404
+
+        name, email = result
+
+        # Prepare the feedback message
+        msg = Message(
+            subject="Feedback from Users",
+            sender=emailinfo.MAIL_USERNAME,
+            recipients=['akashshenvi8@gmail.com']
+        )
+        msg.body = f"User Feedback:\n\nName: {name}\nEmail: {email}\n\nFeedback: {feedback}"
+
+        # Send the email
+        with app.app_context():
+            mail.send(msg)
+            return jsonify({"message": "Feedback sent successfully"}), 200
+    except Exception as e:
+        return jsonify({"message": "Failed to send feedback", "error": str(e)}), 500
+   
+
+
+    
 
 # Register the blueprint
 

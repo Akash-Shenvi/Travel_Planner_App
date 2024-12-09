@@ -41,7 +41,7 @@ export default function ForgotPassword() {
     }
 
     try {
-      const response = await fetch('http://192.168.57.138:5000/otpreq', {
+      const response = await fetch('https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/otpreq', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: input }),
@@ -81,7 +81,7 @@ export default function ForgotPassword() {
     }
 
     try {
-      const response = await fetch('http://192.168.57.138:5000/password_reset', {
+      const response = await fetch('https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/password_reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: input, otp, new_password: newPassword }),

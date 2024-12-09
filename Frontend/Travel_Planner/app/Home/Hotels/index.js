@@ -15,7 +15,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
-const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH'; // Replace with your actual API key
 
 export default function HotelSearchScreen() {
   // State Hooks
@@ -241,7 +241,7 @@ export default function HotelSearchScreen() {
     style={styles.saveButton}
     onPress={async () => {
       try {
-        const response = await axios.post('http://192.168.57.138:5000/saveHotels', {
+        const response = await axios.post('https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/saveHotels', {
           name: selectedHotel.name,
           location: selectedCity?.location || {}, // Ensure the location is passed correctly
           photo: selectedHotel.photos[0]?.uri || '', // Handle cases where photos might be unavailable

@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useRouter } from 'expo-router';
 
 // Replace with your actual Google Places API key from gomaps.pro
-const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV';
+const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH';
 
 export default function PlaceSearch() {
   const [query, setQuery] = useState('');

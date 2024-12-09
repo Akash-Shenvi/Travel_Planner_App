@@ -16,7 +16,7 @@ const ReviewPage = () => {
   const fetchTripData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.57.138:5000/generate_trip', {
+      const response = await fetch('http://192.168.27.138:5000/generate_trip', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

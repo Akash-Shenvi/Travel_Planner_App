@@ -65,17 +65,25 @@ export default function SignUp() {
         phone,
       };
 
-      const response = await axios.post('http://192.168.57.138:5000/signup', requestData);
+      const response = await axios.post('http://192.168.27.138:5000/signup', requestData);
 
       if (response.status === 201) {
-        setIsOtpScreen(true);
-        Alert.alert('OTP Sent', 'An OTP has been sent to your email.');
-      }
-    } catch (error) {
-      const errorMessage = error.response && error.response.data ? error.response.data.message : 'Registration failed. Please try again.';
-      Alert.alert('Error', errorMessage);
-      console.error('Error:', error.response ? error.response.data : error.message);
-    }
+    setIsOtpScreen(true); // Navigate to OTP screen or enable OTP input
+    Alert.alert('OTP Sent', 'An OTP has been sent to your email.');
+  } else if (response.status === 409) {
+    Alert.alert('Alert', 'User Already Exists');
+  } else {
+    Alert.alert('Alert', 'Unexpected response from the server. Please try again.');
+  }
+} catch (error) {
+  const errorMessage =
+    error.response && error.response.data && error.response.data.message
+      ? error.response.data.message
+      : 'Registration failed. Please try again.';
+  
+  Alert.alert('Alert', errorMessage);
+  console.error('Error:', error.response ? error.response.data : error.message);
+}
   };
 
   const handleOtpVerification = async () => {
@@ -85,7 +93,7 @@ export default function SignUp() {
     }
 
     try {
-      const response = await axios.post('http://192.168.57.138:5000/verify_otp', { email, otp });
+      const response = await axios.post('http://192.168.27.138:5000/verify_otp', { email, otp });
 
       if (response.status === 200) {
         setModalVisible(true);
