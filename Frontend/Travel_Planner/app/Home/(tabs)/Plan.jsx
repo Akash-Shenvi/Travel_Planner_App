@@ -75,6 +75,10 @@ export default function Plan() {
         <Ionicons name="compass-outline" size={18} color="#8A4DEB" />
         <Text style={styles.buildTripText}>Build a trip with AI</Text>
       </TouchableOpacity>
+      <TouchableOpacity style={styles.buildTripButton22} onPress={() => router.push('/Home/Saves/Savedaitrip')}>
+        <Ionicons name="compass-outline" size={18} color="#8A4DEB" />
+        <Text style={styles.buildTripText}>Saved Ai Trips</Text>
+      </TouchableOpacity>
 
       {/* Slide-up Create Trip screen */}
     </View>
@@ -120,6 +124,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     borderRadius: 100,
     marginBottom: 10,
+    marginTop:10
   },
   createTripText: {
     color: 'white',
@@ -134,7 +139,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E6E1FF',
     paddingVertical: 15,
     borderRadius: 100,
-    marginBottom: 200,
+    marginBottom: 20,
   },
   buildTripText: {
     color: '#8A4DEB',
@@ -197,6 +202,15 @@ const styles = StyleSheet.create({
     fontFamily: 'outfit-Bold',
     fontSize: 16,
     marginLeft: 5,
+  },
+   buildTripButton22: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E6E1FF',
+    paddingVertical: 15,
+    borderRadius: 100,
+    marginBottom: 70,
   },
  
 });

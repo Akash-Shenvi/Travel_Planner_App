@@ -966,6 +966,90 @@ def save_trip():
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 500
+    
+    
+@auth.route('/get_trips', methods=['GET'])
+def get_trips():
+    try:
+        # Ensure the user is logged in and their session has a user_id
+        if 'user_id' not in session:
+            return jsonify({"error": "Unauthorized access. Please log in."}), 401
+
+        # Get the user_id from the session
+        user_id = session['user_id']
+
+        # Query to fetch trips specific to the logged-in user
+        query = """
+        SELECT trip_id, trip_name 
+        FROM user_trips 
+        WHERE user_id = %s
+        """
+        cursor_object.execute(query, (user_id,))
+
+        # Fetch the trips
+        trips = cursor_object.fetchall()
+
+        # Structure the response to ensure clarity
+        trip_list = [{"id": trip[0], "trip_name": trip[1]} for trip in trips]
+
+        return jsonify(trip_list), 200
+    except Exception as e:
+        # Log the error for debugging purposes
+        app.logger.error(f"Error fetching trips for user {session.get('user_id', 'unknown')}: {e}")
+        return jsonify({"error": "An internal server error occurred. Please try again later."}), 500
+
+    
+@auth.route('/get_trip_details', methods=['POST'])
+def get_trip_details():
+    try:
+        # Validate user login
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"error": "Unauthorized access. Please log in."}), 401
+
+        # Parse and validate input data
+        data = request.get_json()
+        trip_id = data.get('trip_id')
+        if not trip_id:
+            return jsonify({"error": "Trip ID is required."}), 400
+
+        # Query to fetch trip details for the logged-in user
+        query = """
+        SELECT trip_id, trip_name, trip_data, created_at 
+        FROM user_trips 
+        WHERE trip_id = %s AND user_id = %s
+        """
+        cursor_object.execute(query, (trip_id, user_id))
+        trip = cursor_object.fetchone()
+
+        # Check if trip exists and is authorized
+        if not trip:
+            return jsonify({"error": "Trip not found or unauthorized access."}), 404
+
+        # Structure the response
+        trip_id, trip_name, trip_data, created_at = trip
+        trip_details = {
+            "trip_id": trip_id,
+            "trip_name": trip_name,
+            "trip_data": trip_data if isinstance(trip_data, dict) else json.loads(trip_data),
+            "created_at": created_at.strftime("%Y-%m-%d %H:%M:%S") if created_at else None,
+        }
+
+        return jsonify(trip_details), 200
+
+    except json.JSONDecodeError:
+        app.logger.error("Failed to parse trip_data JSON.")
+        return jsonify({"error": "Invalid trip data format."}), 400
+    except Exception as e:
+        # Log the error for debugging purposes
+        app.logger.error(f"Error fetching trip details: {e}", exc_info=True)
+        return jsonify({"error": "An internal server error occurred. Please try again later."}), 500
+
+
+    
+    
+    
+
 
 
 
