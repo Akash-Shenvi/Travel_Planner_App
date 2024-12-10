@@ -9,12 +9,12 @@ import {
   ActivityIndicator,
   Alert,
   TouchableOpacity,
-  Linking,
+   Linking ,
 } from 'react-native';
 import axios from 'axios';
 import { MaterialIcons } from '@expo/vector-icons';
 
-const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH'; // Replace with your actual API key
 
 const SavedAttractionsScreen = () => {
   const [attractions, setAttractions] = useState([]);
@@ -30,7 +30,7 @@ const SavedAttractionsScreen = () => {
   const fetchAttractions = async () => {
     try {
       const response = await axios.post(
-        'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/getAttractions',
+        'http://192.168.100.138:5000/getAttractions',
         {},
         {
           withCredentials: true, // Ensure cookies/session are sent
@@ -59,7 +59,7 @@ const SavedAttractionsScreen = () => {
   const fetchAddress = async (latitude, longitude) => {
     try {
       if (!latitude || !longitude) return 'Coordinates not available';
-      const geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`;
+      const geocodeUrl = `https://maps.gomaps.pro/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_API_KEY}`;
       const response = await axios.get(geocodeUrl);
       if (response.data.results && response.data.results.length > 0) {
         return response.data.results[0].formatted_address || 'Address not available';
@@ -74,7 +74,7 @@ const SavedAttractionsScreen = () => {
   const deleteAttraction = async (name) => {
     try {
       const response = await axios.post(
-        'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/deleteAttraction',
+        'http://192.168.100.138:5000/deleteAttraction',
         { name },
         { withCredentials: true }
       );
@@ -82,18 +82,17 @@ const SavedAttractionsScreen = () => {
         Alert.alert('Success', 'Attraction deleted successfully.');
         setAttractions(attractions.filter((item) => item.name !== name));
       } else {
-        Alert.alert('Error', response.data.error || 'Failed to delete attraction.');
+        Alert.alert('Error', response.data.error || 'Failed to delete Attractions.');
       }
     } catch (error) {
-      console.error('Error deleting attraction:', error);
-      Alert.alert('Error', 'An error occurred while deleting the attraction.');
+      console.error('Error deleting Attractions:', error);
+      Alert.alert('Error', 'An error occurred while deleting the Attractions.');
     }
   };
-
-  const addPlaceToAnotherList = async (name,placeType) => {
+    const addPlaceToAnotherList = async (name,placeType) => {
   try {
     const response = await axios.post(
-      'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/add_place',
+      'http://192.168.100.138:5000/add_place',
       { name, place_type: placeType }, // Use lowercase 'name'
       { withCredentials: true }
     );
@@ -106,29 +105,29 @@ const SavedAttractionsScreen = () => {
 };
 
   const renderAttraction = ({ item }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.title}>{item.name}</Text>
-        <View style={styles.iconRow}>
-          <TouchableOpacity
-            onPress={() => {
-              if (item.latitude && item.longitude) {
-                const navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`;
-                Linking.openURL(navigationUrl);
-              } else if (item.address) {
-                const navigationUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}`;
-                Linking.openURL(navigationUrl);
-              } else {
-                Alert.alert('Error', 'Location information not available');
-              }
-            }}
-          >
-            <MaterialIcons name="navigation" size={24} color="#007aff" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => deleteAttraction(item.name)}>
-            <MaterialIcons name="delete" size={24} color="#f00" />
-          </TouchableOpacity>
-          <TouchableOpacity
+  <View style={styles.card}>
+    <View style={styles.cardHeader}>
+      <Text style={styles.title}>{item.name}</Text>
+      <View style={styles.iconRow}>
+        <TouchableOpacity
+          onPress={() => {
+            if (item.latitude && item.longitude) {
+              const navigationUrl = `https://www.google.com/maps/dir/?api=1&destination=${item.latitude},${item.longitude}`;
+              Linking.openURL(navigationUrl);
+            } else if (item.address) {
+              const navigationUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}`;
+              Linking.openURL(navigationUrl);
+            } else {
+              Alert.alert('Error', 'Location information not available');
+            }
+          }}
+        >
+          <MaterialIcons name="navigation" size={24} color="#007aff" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => deleteAttraction(item.name)}>
+          <MaterialIcons name="delete" size={24} color="#f00" />
+        </TouchableOpacity>
+        <TouchableOpacity
             onPress={async () => {
               try {
                 const response = await addPlaceToAnotherList(item.name, 'attraction', 'saved');
@@ -142,15 +141,15 @@ const SavedAttractionsScreen = () => {
           >
             <MaterialIcons name="add-circle-outline" size={24} color="#4caf50" />
           </TouchableOpacity>
-        </View>
-      </View>
-      <Image source={{ uri: item.photo }} style={styles.image} />
-      <View style={styles.cardContent}>
-        <Text style={styles.description}>{item.description}</Text>
-        <Text style={styles.location}>Address: {item.address}</Text>
       </View>
     </View>
-  );
+    <Image source={{ uri: item.photo }} style={styles.image} />
+    <View style={styles.cardContent}>
+      <Text style={styles.description}>{item.description}</Text>
+      <Text style={styles.location}>Address: {item.address}</Text>
+    </View>
+  </View>
+);
 
   if (loading) {
     return (
@@ -171,7 +170,7 @@ const SavedAttractionsScreen = () => {
           contentContainerStyle={styles.list}
         />
       ) : (
-        <Text style={styles.emptyText}>No saved attractions found.</Text>
+        <Text style={styles.emptyText}>No saved Attractions found.</Text>
       )}
     </View>
   );

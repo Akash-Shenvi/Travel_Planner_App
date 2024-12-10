@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Linking,
+  Dimensions
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
@@ -100,16 +101,47 @@ export default function HotelSearchScreen() {
 
   // Fetch Wikipedia summary for a hotel
   const fetchWikipediaSummary = async (hotelName) => {
-    try {
-      const response = await axios.get(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hotelName)}`
-      );
-      return response.data.extract || 'No description available on Wikipedia.';
-    } catch (error) {
-      console.error('Error fetching Wikipedia summary:', error);
-      return 'No description available on Wikipedia.';
+  try {
+    const pageResponse = await axios.get(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(hotelName)}`
+    );
+
+    if (pageResponse.data.extract) {
+      return pageResponse.data.extract;
+    } else {
+      throw new Error('Summary not found, fallback to search.');
     }
-  };
+  } catch (error) {
+    console.warn('Direct summary fetch failed. Attempting search...');
+
+    // Fallback: Search Wikipedia
+    try {
+      const searchResponse = await axios.get(
+        `https://en.wikipedia.org/w/api.php`,
+        {
+          params: {
+            action: 'query',
+            list: 'search',
+            srsearch: hotelName,
+            format: 'json',
+            origin: '*', // Required for CORS
+          },
+        }
+      );
+
+      const firstResult = searchResponse.data.query?.search?.[0];
+      if (firstResult) {
+        return `Search Result: ${firstResult.snippet.replace(/(<([^>]+)>)/gi, '')}...`;
+      } else {
+        return 'No description found in search results.';
+      }
+    } catch (searchError) {
+      console.error('Error during Wikipedia search:', searchError);
+      return 'No description available.';
+    }
+  }
+};
+
 
   // Fetch hotel details when selected
   const handleSelectHotel = async (hotel) => {
@@ -167,6 +199,7 @@ export default function HotelSearchScreen() {
   // Render UI
   return (
     <View style={styles.container}>
+      <ScrollView>
       {loading ? (
         <ActivityIndicator size="large" color="#4CAF50" style={styles.loader} />
       ) : selectedHotel ? (
@@ -241,7 +274,7 @@ export default function HotelSearchScreen() {
     style={styles.saveButton}
     onPress={async () => {
       try {
-        const response = await axios.post('https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/saveHotels', {
+        const response = await axios.post('http://192.168.27.138:5000/saveHotels', {
           name: selectedHotel.name,
           location: selectedCity?.location || {}, // Ensure the location is passed correctly
           photo: selectedHotel.photos[0]?.uri || '', // Handle cases where photos might be unavailable
@@ -277,62 +310,174 @@ export default function HotelSearchScreen() {
       <Text style={styles.navigateButtonText}>Navigate</Text>
     </TouchableOpacity>
 )}
+</ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 50,
-    flex: 1,
-    backgroundColor: '#f8f9fa', // Light background
-  },
-  loader: { marginTop: '50%' },
-   header: {
-    padding: 20,
-    backgroundColor: '#8A4DEB', // Green header
+  flex: 1,
+  backgroundColor: '#f8f9fa', // Light, neutral background for a modern look
+},
+loader: {
+  flex: 1,
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginBottom:30
+},
+header: {
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    backgroundColor: '#5E60CE', // Modern deep blue-purple header
     alignItems: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    elevation: 5,
   },
-  headerText: { fontSize: 26, color: '#fff', fontWeight: 'bold' },
-  searchContainer: { },
-  searchBox: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  input: { flex: 1, borderBottomWidth: 1, borderBottomColor: 'gray', marginLeft: 10 },
-  icon: { marginLeft: 10 },
-  listContainer: { flex: 1, padding: 20 },
-  listItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ddd' },
-  listItemText: { fontSize: 16 },
-  detailsContainer: { flex: 1, padding: 20 },
-  photosContainer: { height: 200, marginBottom: 10 },
-  image: { width: 450, height: 300, marginRight: 10, borderRadius: 10,marginTop: 30 },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
-  subtitle: { fontSize: 18, marginBottom: 10, color: 'gray' },
-  rating: { fontSize: 16, marginBottom: 10 },
-  website: { fontSize: 16, marginBottom: 10, color: '#4CAF50', textDecorationLine: 'underline' },
-  summary: { fontSize: 16, marginTop: 10, marginBottom: 250},
-  backButton: { marginBottom: 10 , marginTop: 15,},
-
-    searchBox: {
+  headerText: {
+    fontSize: 26,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: 20,
-    padding: 12,
-    backgroundColor: '#e9ecef', // Subtle gray
-    borderRadius: 10,
+    marginHorizontal: 15,
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ced4da',
+    borderColor: '#D6D8E1',
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2, // Shadow for Android
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
   },
-  saveButton: {
+
+
+icon: {
+  marginRight: 10,
+  color: '#6C757D', // Subtle icon color
+},
+input: {
+  flex: 1,
+  borderWidth: 0,
+  fontSize: 16,
+  color: '#343A40',
+},
+listContainer: {
+  flex: 1,
+  padding: 20,
+  backgroundColor: '#fff',
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: -2 },
+  shadowOpacity: 0.1,
+  shadowRadius: 5,
+  elevation: 5,
+   // Shadow for Android
+},
+listItem: {
+  padding: 15,
+  marginVertical: 8,
+  backgroundColor: '#fff',
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: '#ddd',
+  shadowColor: '#000',
+  shadowOpacity: 0.05,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 2, // Shadow for Android
+  
+},
+listItemText: {
+  fontSize: 16,
+  color: '#343A40',
+  fontWeight: '600',
+  
+},
+detailsContainer: {
+  flex: 1,
+  padding: 20,
+  backgroundColor: '#fff',
+  borderTopLeftRadius: 20,
+  borderTopRightRadius: 20,
+},
+photosContainer: {
+  height: 250,
+  marginBottom: 20,
+  flexDirection: 'row',
+  borderRadius: 10,
+  overflow: 'hidden',
+  
+},
+image: {
+  width: Dimensions.get('window').width - 40,
+  height: 250,
+  borderRadius: 10,
+  marginHorizontal: 5,
+  resizeMode: 'cover',
+},
+title: {
+  fontSize: 22,
+  fontWeight: 'bold',
+  marginTop: 20,
+  color: '#343A40',
+  
+},
+subtitle: {
+  fontSize: 16,
+  color: '#6C757D',
+  marginVertical: 5,
+ 
+},
+rating: {
+  fontSize: 16,
+  color: '#E91E63', // Pink rating color
+  fontWeight: '600',
+  marginBottom: 10,
+},
+website: {
+  fontSize: 16,
+  color: '#007bff', // Blue link color
+  textDecorationLine: 'underline',
+  marginBottom: 10,
+},
+summary: {
+  fontSize: 16,
+  color: '#6C757D',
+  lineHeight: 22,
+  marginTop: 10,
+  
+},
+backButton: {
+  marginBottom: 10,
+  alignSelf: 'flex-start',
+  padding: 10,
+  borderRadius: 8,
+  backgroundColor: '#E9ECEF',
+  marginTop:10,
+},
+saveButton: {
   backgroundColor: '#4CAF50',
   paddingVertical: 12,
   paddingHorizontal: 20,
-  borderRadius: 8,
+  borderRadius: 10,
   alignSelf: 'center',
-  marginVertical: 20,
+  marginTop: 20,
+  shadowColor: '#000',
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 3,
 },
 saveButtonText: {
   color: '#fff',
@@ -341,21 +486,29 @@ saveButtonText: {
 },
 buttonContainer: {
   flexDirection: 'row',
-  justifyContent: 'space-around',
+  justifyContent: 'space-between',
   marginVertical: 20,
+  paddingHorizontal: 20,
 },
 navigateButton: {
-  backgroundColor: '#007bff', // Blue color for the navigate button
+  backgroundColor: '#007bff', // Blue button
   paddingVertical: 12,
-  marginBottom: 30,
   paddingHorizontal: 20,
-  borderRadius: 8,
+  borderRadius: 10,
   alignSelf: 'center',
+  marginTop: 20,
+  shadowColor: '#000',
+  shadowOpacity: 0.1,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 3,
+   marginBottom:100,
 },
 navigateButtonText: {
   color: '#fff',
   fontSize: 16,
   fontWeight: 'bold',
 },
+
 
 });

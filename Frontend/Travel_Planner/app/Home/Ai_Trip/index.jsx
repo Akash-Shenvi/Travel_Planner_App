@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, FlatList, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import axios from 'axios';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
+
 
 // Replace with your actual Google Places API key from gomaps.pro
 const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH';
@@ -10,8 +11,15 @@ export default function PlaceSearch() {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const router = useRouter();
+  const navigation = useNavigation();
 
   useEffect(() => {
+     navigation.setOptions({
+  headerTitle: 'Select a City',
+  headerBackTitleVisible: false, // Removes the header text
+  headerShown: true, // Ensures the header is displayed
+});
+
     const fetchSuggestions = async () => {
       if (query.length < 3) return; // Start searching after 3 characters
       try {
@@ -108,7 +116,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    paddingTop: 60,
+    backgroundColor: '#fff',
+    
+    
   },
   searchInput: {
     height: 50,
@@ -119,11 +129,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   suggestionText: {
-    padding: 10,
-    fontSize: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'black',
-  },
+  padding: 12,
+  fontSize: 16,
+  borderBottomWidth: 1,
+  borderBottomColor: '#ddd', // Subtle divider color
+  backgroundColor: '#fff', // White background for contrast
+},
   poweredByGoogleContainer: {
     alignItems: 'center',
     marginTop: 10,

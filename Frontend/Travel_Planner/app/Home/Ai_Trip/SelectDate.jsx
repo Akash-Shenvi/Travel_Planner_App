@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import CalendarPicker from 'react-native-calendar-picker';
 import { useLocalSearchParams } from 'expo-router';
 
@@ -8,9 +8,17 @@ const TravelDates = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const router = useRouter();
-  const params = useLocalSearchParams(); // Retrieve params from the previous screen
+  const params = useLocalSearchParams();
+  const navigation = useNavigation(); // Retrieve params from the previous screen
 
   useEffect(() => {
+        navigation.setOptions({
+      headerShown: true,
+      headerTransparent:true,
+      headerTitle:'',  // Hides the back button label (if any)
+ 
+
+    });
     console.log('Received Params:', params);
   }, [params]);
 
@@ -63,7 +71,7 @@ const TravelDates = () => {
     <View style={styles.container}>
       <Text style={styles.headerText}>Travel Dates</Text>
       <Text style={styles.subHeaderText}>
-        Location: {params.placeName || 'Unknown'}
+        Location: {params.name || 'Unknown'}
       </Text>
       <Text style={styles.subHeaderText}>
         Travelers: {params.title || 'Unknown'}
@@ -109,6 +117,7 @@ const styles = StyleSheet.create({
     marginTop: 60,
     fontFamily: 'Outfit', // Custom font you mentioned earlier
     color: 'black',
+     
   },
   subHeaderText: {
     fontSize: 16,

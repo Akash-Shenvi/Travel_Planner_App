@@ -14,7 +14,7 @@ import {
 import axios from 'axios';
 import { MaterialIcons } from '@expo/vector-icons';
 
-const GOOGLE_API_KEY = 'AlzaSyze_f--O6rywYjzimFiITHTkHxuNKrYoNV'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH'; // Replace with your actual API key
 
 const SavedAttractionsScreen = () => {
   const [attractions, setAttractions] = useState([]);
@@ -30,7 +30,7 @@ const SavedAttractionsScreen = () => {
   const fetchAttractions = async () => {
     try {
       const response = await axios.post(
-        'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/getHotels',
+        'http://192.168.100.138:5000/getHotels',
         {},
         {
           withCredentials: true, // Ensure cookies/session are sent
@@ -74,7 +74,7 @@ const SavedAttractionsScreen = () => {
   const deleteAttraction = async (name) => {
     try {
       const response = await axios.post(
-        'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/deleteHotels',
+        'http://192.168.27.138:5000/deleteHotels',
         { name },
         { withCredentials: true }
       );
@@ -92,7 +92,7 @@ const SavedAttractionsScreen = () => {
     const addPlaceToAnotherList = async (name,placeType) => {
   try {
     const response = await axios.post(
-      'https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/add_place',
+      'http://192.168.27.138:5000/add_place',
       { name, place_type: placeType }, // Use lowercase 'name'
       { withCredentials: true }
     );

@@ -10,6 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Linking,
+  Dimensions,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
@@ -99,17 +100,47 @@ export default function RestaurantSearchScreen() {
   };
 
   // Fetch Wikipedia summary for a restaurant
-  const fetchWikipediaSummary = async (restaurantName) => {
-    try {
-      const response = await axios.get(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(restaurantName)}`
-      );
-      return response.data.extract || 'No description available on Wikipedia.';
-    } catch (error) {
-      console.error('Error fetching Wikipedia summary:', error);
-      return 'No description available on Wikipedia.';
+   const fetchWikipediaSummary = async (restaurantName) => {
+  try {
+    const pageResponse = await axios.get(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(restaurantName)}`
+    );
+
+    if (pageResponse.data.extract) {
+      return pageResponse.data.extract;
+    } else {
+      throw new Error('Summary not found, fallback to search.');
     }
-  };
+  } catch (error) {
+    console.warn('Direct summary fetch failed. Attempting search...');
+
+    // Fallback: Search Wikipedia
+    try {
+      const searchResponse = await axios.get(
+        `https://en.wikipedia.org/w/api.php`,
+        {
+          params: {
+            action: 'query',
+            list: 'search',
+            srsearch:restaurantName,
+            format: 'json',
+            origin: '*', // Required for CORS
+          },
+        }
+      );
+
+      const firstResult = searchResponse.data.query?.search?.[0];
+      if (firstResult) {
+        return `Search Result: ${firstResult.snippet.replace(/(<([^>]+)>)/gi, '')}...`;
+      } else {
+        return 'No description found in search results.';
+      }
+    } catch (searchError) {
+      console.error('Error during Wikipedia search:', searchError);
+      return 'No description available.';
+    }
+  }
+};
 
   // Fetch restaurant details when selected
   const handleSelectRestaurant = async (restaurant) => {
@@ -167,7 +198,9 @@ export default function RestaurantSearchScreen() {
 
   // Render UI
   return (
+    
     <View style={styles.container}>
+      <ScrollView>
       {loading ? (
         <ActivityIndicator size="large" color="#FF5722" style={styles.loader} />
       ) : selectedRestaurant ? (
@@ -248,7 +281,7 @@ export default function RestaurantSearchScreen() {
     style={styles.saveButton}
     onPress={async () => {
       try {
-        await axios.post('https://ade3-2401-4900-619b-b023-10d1-321a-a9e9-e77e.ngrok-free.app/saveResturants', {
+        await axios.post('http://192.168.27.138:5000/saveResturants', {
           name: selectedRestaurant.name,
           location: selectedCity?.location || {}, // Fallback to an empty object if no location
           photo: selectedRestaurant.photos.length > 0 ? selectedRestaurant.photos[0].uri : 'No photo available',
@@ -280,6 +313,7 @@ export default function RestaurantSearchScreen() {
       <Text style={styles.navigateButtonText}>Navigate</Text>
     </TouchableOpacity>
 )}
+</ScrollView>
     </View>
   );
 }
@@ -287,26 +321,110 @@ export default function RestaurantSearchScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   loader: { marginTop: '50%' },
-  header: { padding: 20, backgroundColor: '#8A4DEB', padding:25, alignItems:'center', },
-  headerText: { fontSize: 26, color: '#fff', fontWeight: 'bold' },
-  searchContainer: {  },
-  searchBox: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  input: { flex: 1, borderBottomWidth: 1, borderBottomColor: 'gray', marginLeft: 10 },
-  icon: { marginLeft: 10 },
-  listContainer: { flex: 1, padding: 20,marginBottom: 50, },
-  listItem: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ddd' },
-  listItemText: { fontSize: 16 },
+  header: {
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    backgroundColor: '#5E60CE', // Modern deep blue-purple header
+    alignItems: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    elevation: 5,
+  },
+  headerText: {
+    fontSize: 26,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 15,
+    marginTop: 20,
+    paddingVertical: 12,
+    paddingHorizontal: 15,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D6D8E1',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+  },
+  icon: {
+    marginHorizontal: 10,
+    color: '#9CA3AF', // Neutral gray icon
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    color: '#495057',
+  },
+  listContainer: { flex: 1, padding: 10,marginBottom: 50, },
+  listItem: {  padding: 15,
+    marginHorizontal: 15,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E2E3E9',
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3, },
+  listItemText: {
+    fontSize: 16,
+    color: '#2C3A47',
+    fontWeight: '500',
+  },
   detailsContainer: { flex: 1, padding: 20 },
-  photosContainer: { height: 200, marginBottom: 10 },
-  image: { width: 300, height: 200, marginRight: 10, borderRadius: 10 },
-  title: { fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
-  subtitle: { fontSize: 18, marginBottom: 10, color: 'gray' },
-  rating: { fontSize: 16, marginBottom: 10 },
+  photosContainer: {
+  height: 250,
+  marginBottom: 20,
+  flexDirection: 'row',
+  borderRadius: 10,
+  overflow: 'hidden',
+  },
+  image: {
+    width: Dimensions.get('window').width - 30,
+    height: 250,
+    borderRadius: 15,
+    marginVertical: 15,
+    alignSelf: 'center',
+  },
+   title: {
+    fontSize: 22,
+    fontWeight: '700',
+    margin: 10,
+    color: '#343A40',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#6C757D',
+    marginHorizontal: 10,
+  },
+  rating: {
+  fontSize: 16,
+  color: '#E91E63', // Pink rating color
+  fontWeight: '600',
+  marginBottom: 10,
+},
   website: { fontSize: 16, marginBottom: 10, color: '#4CAF50', textDecorationLine: 'underline' },
   sectionTitle: { fontSize: 18, fontWeight: 'bold', marginTop: 20 },
   hoursText: { fontSize: 16, color: 'gray', marginTop: 5 },
   summary: { fontSize: 16, marginTop: 10 },
-  backButton: { marginBottom: 20, marginTop: 17, },
+  backButton: {
+  marginBottom: 10,
+  alignSelf: 'flex-start',
+  padding: 10,
+  borderRadius: 8,
+  backgroundColor: '#E9ECEF',
+  marginTop:10,
+},
 
     searchBox: {
     flexDirection: 'row',
@@ -323,30 +441,50 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2, // Shadow for Android
   },
-  saveButton: {
+ saveButton: {
   backgroundColor: '#4CAF50',
-  paddingVertical: 12,
-  paddingHorizontal: 20,
-  borderRadius: 8,
-  alignSelf: 'center',
-  marginVertical: 20,
+  paddingVertical: 10, // Smaller padding for a compact look
+  paddingHorizontal: 18,
+  borderRadius: 100, // Slightly rounded corners for modern design
+  flex: 1,
+  marginVertical: 15, // Reduced vertical spacing
+  marginHorizontal: 5, // Spacing between side-by-side buttons
+  shadowColor: '#000',
+  shadowOpacity: 0.15,
+  shadowRadius: 5,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 3,
+  justifyContent:'center',
 },
 saveButtonText: {
-  color: '#fff',
-  fontSize: 16,
-  fontWeight: 'bold',
+  color: '#FFFFFF',
+  fontSize: 16, // Adjusted for compact design
+  fontWeight: '600', // Slightly lighter for a modern feel
+  letterSpacing: 0.3,
+  textAlign: 'center',
+  alignContent:'center' // Subtle spacing for readability
 },
 navigateButton: {
-  backgroundColor: '#007bff', // Blue color for the navigate button
-  paddingVertical: 12,
-  paddingHorizontal: 20,
-  marginBottom: 30,
-  borderRadius: 8,
-  alignSelf: 'center',
+  backgroundColor: '#007BFF',
+  paddingVertical: 10, // Matches saveButton for uniformity
+  paddingHorizontal: 18,
+  borderRadius: 100,
+  flex: 1,
+  marginHorizontal: 5, // Keeps consistent spacing
+  shadowColor: '#000',
+  shadowOpacity: 0.15,
+  shadowRadius: 5,
+  shadowOffset: { width: 0, height: 2 },
+  elevation: 3,
+  justifyContent:'center',
+  marginBottom:5,
+  
 },
 navigateButtonText: {
-  color: '#fff',
-  fontSize: 16,
-  fontWeight: 'bold',
+  color: '#FFFFFF',
+  fontSize: 16, // Matches saveButtonText for uniformity
+  fontWeight: '600',
+  letterSpacing: 0.3,
+  textAlign: 'center'
 },
 });

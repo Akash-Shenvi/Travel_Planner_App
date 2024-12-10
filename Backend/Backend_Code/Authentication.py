@@ -10,7 +10,6 @@ import logging
 import os
 import google.generativeai as genai
 from flask_session import Session
-import uuid
 
 from flask import Flask, request, jsonify
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'base_data.json'), encoding='utf-8') as fobj:
@@ -19,13 +18,13 @@ with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'base_data.j
 # Initialize Flask app
 app = Flask(__name__)
 
-api_key =api_key['api'] # Replace with your actual API key
+api_key =api_key['api'] 
 os.environ["GOOGLE_API_KEY"] = api_key
 
-# Configure genai with the API key
+
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 
-# Create the model generation configuration
+#  model generation configuration
 generation_config = {
     "temperature": 1.0,
     "top_p": 0.95,
@@ -34,7 +33,7 @@ generation_config = {
     "response_mime_type": "text/plain",
 }
 
-# Initialize the model
+
 model = genai.GenerativeModel(model_name="gemini-1.5-flash-8b", generation_config=generation_config)
 
 # Configure Flask-Mail
@@ -45,12 +44,12 @@ app.config['MAIL_USE_SSL'] = emailinfo.MAIL_USE_SSL
 app.config['MAIL_USERNAME'] = emailinfo.MAIL_USERNAME
 app.config['MAIL_PASSWORD'] = emailinfo.MAIL_PASSWORD
 
-# Initialize Flask-Mail
+
 mail = Mail(app)
 
 # Configure session
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=1)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=48)
 Session(app)
 app.config['MYSQL_POOL_SIZE'] = 10
 app.config['MYSQL_CONNECT_TIMEOUT'] = 300  # Increase timeout
@@ -477,26 +476,29 @@ def password_reset():
     
 @auth.route('/chat', methods=['POST'])
 def chat():
-    try:
-        print("hii")
-        # Parse user message from the request JSON
-        data = request.json
-        print(data)
-        user_message = data.get('messege')
-        if not user_message:
-            return jsonify({"error": "Message is required"}), 400
+    # Get user message from the request body
+    user_message = request.json.get("message", "")
 
-        # Start a chat session and send a message
+    if not user_message:
+        return jsonify({"response": "No message provided"}), 400
+
+    try:
+        # Start a new chat session with no history
+        model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            generation_config=generation_config,
+        )
+
         chat_session = model.start_chat(history=[])
+
+        # Send the user message to the model and get the AI response
         response = chat_session.send_message(user_message)
 
-        # Return the response in JSON format
-        return jsonify({
-            "message": user_message,
-            "response": response.text  # Assuming the response has a `text` attribute
-        })
+        # Return the AI's response
+        return jsonify({"response": response.text})
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print("Error:", e)
+        return jsonify({"response": "An error occurred while processing your request."}), 500
     
 @auth.route('/saveAttraction', methods=['POST'])
 def save_attraction():
@@ -933,6 +935,41 @@ def generate_trip():
     except Exception as e:
         logging.error(f"Error generating trip data: {e}")
         return jsonify({"error": "Failed to generate trip data"}), 500
+    
+@auth.route('/save_trip', methods=['POST'])
+def save_trip():
+    try:
+        data = request.get_json()
+
+        # Extract details from the request
+        trip_name = data.get('tripName')
+        trip_data = data.get('tripData')
+        user_id = session['user_id']
+        print(trip_name,trip_data,user_id)
+         
+
+        if not trip_name or not trip_data or not user_id:
+            return jsonify({"error": "Missing required fields: tripName, tripData, or user_id"}), 400
+
+        # Convert trip_data to JSON string
+        trip_data_json = json.dumps(trip_data)
+
+        # Connect to the database
+        
+
+        # Insert trip into the database
+        query = """
+            INSERT INTO user_trips (user_id, trip_name, trip_data)
+            VALUES (%s, %s, %s)
+        """
+        cursor_object.execute(query, (user_id, trip_name, trip_data_json))
+        database.commit()
+        return jsonify({"message": "Trip saved successfully!"}), 201
+
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 500
+
 
 
 
@@ -1347,6 +1384,7 @@ def feedback():
     except Exception as e:
         return jsonify({"message": "Failed to send feedback", "error": str(e)}), 500
    
+
 
 
     

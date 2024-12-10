@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter,useNavigation, useLocalSearchParams } from "expo-router";
 
 const BudgetScreen = () => {
   const [selectedBudget, setSelectedBudget] = useState(null);
   const router = useRouter();
-  const params = useLocalSearchParams(); // Retrieve params passed from the previous screen
+  const params = useLocalSearchParams(); 
+  const navigation = useNavigation();// Retrieve params passed from the previous screen
 
   useEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      headerTransparent:true,
+      headerTitle:'',  // Hides the back button label (if any)
+ 
+
+    });
+
     // Log the received parameters for debugging
     console.log("Received Params on Budget Screen:", params);
   }, [params]);
@@ -78,7 +87,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8F8F8",
     padding: 20,
-    justifyContent: "center",
+    marginTop:80,
+    backgroundColor:'#fff',
   },
   title: {
     fontSize: 24,

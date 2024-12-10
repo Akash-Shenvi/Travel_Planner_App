@@ -1,21 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { 
+  View, Text, StyleSheet, ActivityIndicator, ScrollView, Button, Modal, TextInput, Alert, TouchableOpacity 
+} from 'react-native';
+import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
 
 const ReviewPage = () => {
+  const router = useRouter();
   const params = useLocalSearchParams();
+  const navigation = useNavigation();
   const [tripData, setTripData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [tripName, setTripName] = useState('');
 
   useEffect(() => {
+    navigation.setOptions({
+      headerShown: true,
+      headerTransparent: true,
+      headerTitle: '', // Hides the back button label (if any)
+    });
     fetchTripData();
   }, []);
 
   const fetchTripData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.27.138:5000/generate_trip', {
+      const response = await fetch('http://192.168.100.138:5000/generate_trip', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -40,6 +51,35 @@ const ReviewPage = () => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const saveTrip = async () => {
+    if (!tripName.trim()) {
+      Alert.alert('Error', 'Please enter a valid trip name.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.100.138:5000/save_trip', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tripName,
+          tripData,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save trip. Please try again.');
+      }
+
+      Alert.alert('Success', 'Trip saved successfully!');
+      setModalVisible(false);
+    } catch (error) {
+      Alert.alert('Error', error.message || 'Failed to save trip.');
     }
   };
 
@@ -70,54 +110,93 @@ const ReviewPage = () => {
   const { trip_details, itinerary, notes } = tripData;
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Trip Summary Section */}
-      <View style={[styles.card, styles.shadow]}>
-        <Text style={styles.title}>Trip Overview</Text>
-        <Text style={styles.detail}>
-          Destination: <Text style={styles.highlight}>{trip_details?.destination || 'N/A'}</Text>
-        </Text>
-        <Text style={styles.detail}>
-          Dates: <Text style={styles.highlight}>{trip_details?.dates || 'N/A'}</Text>
-        </Text>
-        <Text style={styles.detail}>
-          Budget: <Text style={styles.highlight}>{trip_details?.budget || 'N/A'}</Text>
-        </Text>
-        <Text style={styles.detail}>
-          Duration: <Text style={styles.highlight}>{trip_details?.duration || 'N/A'} days</Text>
-        </Text>
-      </View>
-
-      {/* Itinerary Section */}
-      <View style={[styles.card, styles.shadow]}>
-        <Text style={styles.title}>Itinerary</Text>
-        {itinerary.map((day, index) => (
-          <View key={index} style={styles.daySection}>
-            <Text style={styles.dayHeader}>{day.day}</Text>
-            {day.activities.map((activity, idx) => (
-              <View key={idx} style={styles.activity}>
-                <Text style={styles.activityDesc}>{activity.description}</Text>
-                <Text style={styles.activityDetail}>Location: {activity.location}</Text>
-                <Text style={styles.activityDetail}>Estimated Cost: {activity.estimated_cost}</Text>
-                {activity.notes && (
-                  <Text style={styles.activityNote}>Notes: {activity.notes}</Text>
-                )}
-              </View>
-            ))}
-          </View>
-        ))}
-      </View>
-
-      {/* Notes Section */}
-      <View style={[styles.card, styles.shadow]}>
-        <Text style={styles.title}>Important Notes</Text>
-        {notes.map((note, index) => (
-          <Text key={index} style={styles.note}>
-            • {note}
+    <>
+      <ScrollView style={styles.container}>
+        {/* Trip Summary Section */}
+        <View style={[styles.card, styles.shadow]}>
+          <Text style={styles.title}>Trip Overview</Text>
+          <Text style={styles.detail}>
+            Destination: <Text style={styles.highlight}>{trip_details?.destination || 'N/A'}</Text>
           </Text>
-        ))}
-      </View>
-    </ScrollView>
+          <Text style={styles.detail}>
+            Dates: <Text style={styles.highlight}>{trip_details?.dates || 'N/A'}</Text>
+          </Text>
+          <Text style={styles.detail}>
+            Budget: <Text style={styles.highlight}>{trip_details?.budget || 'N/A'}</Text>
+          </Text>
+          <Text style={styles.detail}>
+            Duration: <Text style={styles.highlight}>{trip_details?.duration || 'N/A'} days</Text>
+          </Text>
+        </View>
+
+        {/* Itinerary Section */}
+        <View style={[styles.card, styles.shadow]}>
+          <Text style={styles.title}>Itinerary</Text>
+          {itinerary.map((day, index) => (
+            <View key={index} style={styles.daySection}>
+              <Text style={styles.dayHeader}>{day.day}</Text>
+              {day.activities.map((activity, idx) => (
+                <View key={idx} style={styles.activity}>
+                  <Text style={styles.activityDesc}>{activity.description}</Text>
+                  <Text style={styles.activityDetail}>Location: {activity.location}</Text>
+                  <Text style={styles.activityDetail}>Estimated Cost: {activity.estimated_cost}</Text>
+                  {activity.notes && (
+                    <Text style={styles.activityNote}>Notes: {activity.notes}</Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+
+        {/* Notes Section */}
+        <View style={[styles.card, styles.shadow]}>
+          <Text style={styles.title}>Important Notes</Text>
+          {notes.map((note, index) => (
+            <Text key={index} style={styles.note}>
+              • {note}
+            </Text>
+          ))}
+        </View>
+
+        {/* Save Button */}
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.saveButtonText}>Save Trip</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Save Trip Modal */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Enter Trip Name</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter trip name"
+              value={tripName}
+              onChangeText={setTripName}
+            />
+            <TouchableOpacity style={styles.modalButton} onPress={saveTrip}>
+              <Text style={styles.modalButtonText}>Save</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modalButton, styles.cancelButton]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={styles.modalButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 };
 
@@ -217,6 +296,61 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
+  saveButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    marginVertical: 16,
+  },
+  saveButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: '#FFF',
+    padding: 20,
+    borderRadius: 12,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  input: {
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#CCC',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+  },
+  modalButton: {
+    backgroundColor: '#4CAF50',
+    borderRadius: 8,
+    padding: 10,
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 10,
+  },
+  cancelButton: {
+    backgroundColor: '#F44336',
+  },
+  modalButtonText: {
+    color: '#FFF',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+
 });
 
 

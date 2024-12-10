@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import { useNavigation, useRouter } from 'expo-router';
 import {
   View,
   Text,
@@ -15,10 +15,18 @@ export default function TravelersScreen() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [customTravelers, setCustomTravelers] = useState('');
   const router = useRouter();
-  const params = useLocalSearchParams(); // Retrieve data from the previous screen
+  const params = useLocalSearchParams();
+  const navigation = useNavigation(); // Retrieve data from the previous screen
 
   // Log the params when the component is rendered
   useEffect(() => {
+     navigation.setOptions({
+      headerShown: true,
+      headerTransparent:true,
+      headerTitle:'',  // Hides the back button label (if any)
+ 
+
+    });
     console.log('Received Params:', params);
   }, [params]);
 
@@ -136,7 +144,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f8f8',
     paddingHorizontal: 16,
-    paddingTop: 40,
+    paddingTop: 120,
   },
   heading: {
     fontSize: 24,
@@ -198,6 +206,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000',
     borderRadius: 10,
     alignItems: 'center',
+    marginBottom:10,
   },
   continueButtonText: {
     color: '#fff',

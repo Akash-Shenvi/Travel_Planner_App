@@ -20,7 +20,7 @@ export default function Login() {
     });
 
     // Check session
-    fetch('http://192.168.27.138:5000/check-session', {
+    fetch('http://192.168.100.138:5000/check-session', {
       method: 'GET',
       credentials: 'include', // Ensure cookies are sent with the request
     })
@@ -28,9 +28,7 @@ export default function Login() {
       .then((data) => {
         if (data.session) {
           router.replace('/Home'); // Navigate to home page if session exists
-        } else {
-          router.replace('/auth/sign-in'); // Navigate to sign-in page if no session
-        }
+        } 
       })
       .catch((error) => console.error('Error checking session:', error));
   }, [navigation, router]);

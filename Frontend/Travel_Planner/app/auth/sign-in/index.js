@@ -42,7 +42,7 @@ export default function SignIn() {
     };
 
     try {
-      const response = await fetch('http://192.168.27.138:5000/login', {
+      const response = await fetch('http://192.168.100.138:5000/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export default function SignIn() {
           setModalVisible(false);
           router.replace('Home');
         }, 2000);
-      } else if (response.status === 404) {
+      } else if (response.status === 400) {
         setErrorMessage('Invalid email or password. Please check your credentials.');
       } else {
         setErrorMessage('An error occurred. Please try again later.');
