@@ -3,19 +3,19 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert, ScrollView 
 } from 'react-native';
 import { useNavigation, useRouter } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const TripList = () => {
   const [trips, setTrips] = useState([]);
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [loading, setLoading] = useState(false);
-   const navigation = useNavigation();
+  const navigation = useNavigation();
   const router = useRouter();
 
   useEffect(() => {
-     navigation.setOptions({
+    navigation.setOptions({
       headerShown: true,
-      
-      headerTitle: 'Your Saved Ai Trips', // Hides the back button label (if any)
+      headerTitle: 'Your Saved AI Trips',
     });
     
     fetchTrips();
@@ -43,6 +43,59 @@ const TripList = () => {
     }
   };
 
+  const deleteTrip = async (id) => {
+    try {
+      const response = await fetch(`http://192.168.100.138:5000/delete_ai_trip`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ trip_id: id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete trip.');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setTrips((prevTrips) => prevTrips.filter((trip) => trip.id !== id));
+        Alert.alert('Success', 'Trip deleted successfully.');
+      } else {
+        throw new Error(data.message || 'Failed to delete trip.');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message || 'An error occurred while deleting the trip.');
+    }
+  };
+
+  const deleteAllTrips = async () => {
+    try {
+      const response = await fetch(`http://192.168.100.138:5000/delete_all_trips`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete all trips.');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        setTrips([]); // Clear the trips list
+        Alert.alert('Success', 'All trips deleted successfully.');
+      } else {
+        throw new Error(data.message || 'Failed to delete all trips.');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message || 'An error occurred while deleting all trips.');
+    }
+  };
+
   const fetchTripDetails = async (id) => {
     if (!id) {
       Alert.alert('Error', 'Trip ID is missing.');
@@ -56,7 +109,7 @@ const TripList = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ trip_id: id }), // Ensure trip_id is sent as expected
+        body: JSON.stringify({ trip_id: id }),
       });
 
       if (!response.ok) {
@@ -94,67 +147,76 @@ const TripList = () => {
     const { trip_name, trip_data } = selectedTrip;
 
     return (
-<ScrollView style={styles.container}>
-  <View style={styles.detailsContainer}>
-    {/* Trip Details Section */}
-    <Text style={styles.detailsTitle}>Trip Details</Text>
-    <View style={styles.infoSection}>
-      <Text style={styles.detail}>
-        <Text style={styles.subHeading}>Name: </Text>
-        {trip_name}
-      </Text>
-      <Text style={styles.detail}>
-        <Text style={styles.subHeading}>Destination: </Text>
-        {trip_data.trip_details.destination || 'N/A'}
-      </Text>
-      <Text style={styles.detail}>
-        <Text style={styles.subHeading}>Dates: </Text>
-        {trip_data.trip_details.dates || 'N/A'}
-      </Text>
-      <Text style={styles.detail}>
-        <Text style={styles.subHeading}>Budget: </Text>
-        {trip_data.trip_details.budget || 'N/A'}
-      </Text>
-    </View>
-
-    {/* Itinerary Section */}
-    <Text style={styles.sectionTitle}>Itinerary</Text>
-    {trip_data.itinerary.map((day, index) => (
-      <View key={index} style={styles.dayContainer}>
-        <Text style={styles.dayTitle}>{day.day}</Text>
-        {day.activities.map((activity, idx) => (
-          <View key={idx} style={styles.activityContainer}>
-            <Text style={styles.activityText}>
-              <Text style={styles.subHeading1}>Location: </Text>
-              {activity.location}
+      <ScrollView style={styles.container}>
+        <View style={styles.detailsContainer}>
+          {/* Trip Details */}
+          <Text style={styles.detailsTitle}>Trip Details</Text>
+          <View style={styles.infoSection}>
+            <Text style={styles.detail}>
+              <Text style={styles.subHeading}>Name: </Text>
+              {trip_name}
             </Text>
-            <Text style={styles.activityText}>
-              <Text style={styles.subHeading4}>Description: </Text>
-              {activity.description}
+            <Text style={styles.detail}>
+              <Text style={styles.subHeading}>Destination: </Text>
+              {trip_data.trip_details.destination || 'N/A'}
             </Text>
-            <Text style={styles.activityText}>
-              <Text style={styles.subHeading3}>Estimated Cost: </Text>
-              {activity.estimated_cost}
+            <Text style={styles.detail}>
+              <Text style={styles.subHeading}>Dates: </Text>
+              {trip_data.trip_details.dates || 'N/A'}
             </Text>
-            {activity.notes && (
-              <Text style={styles.activityNote}>
-                <Text style={styles.subHeading}>Notes: </Text>
-                {activity.notes}
-              </Text>
-            )}
+            <Text style={styles.detail}>
+              <Text style={styles.subHeading}>Budget: </Text>
+              {trip_data.trip_details.budget || 'N/A'}
+            </Text>
           </View>
-        ))}
+
+          {/* Itinerary */}
+          <Text style={styles.sectionTitle}>Itinerary</Text>
+          {trip_data.itinerary.map((day, index) => (
+            <View key={index} style={styles.dayContainer}>
+              <Text style={styles.dayTitle}>{day.day}</Text>
+              {day.activities.map((activity, idx) => (
+                <View key={idx} style={styles.activityContainer}>
+                  <Text style={styles.activityText}>
+                    <Text style={styles.subHeading1}>Location: </Text>
+                    {activity.location}
+                  </Text>
+                  <Text style={styles.activityText}>
+                    <Text style={styles.subHeading4}>Description: </Text>
+                    {activity.description}
+                  </Text>
+                  <Text style={styles.activityText}>
+                    <Text style={styles.subHeading3}>Estimated Cost: </Text>
+                    {activity.estimated_cost}
+                  </Text>
+                  {activity.notes && (
+                    <Text style={styles.activityNote}>
+                      <Text style={styles.subHeading}>Notes: </Text>
+                      {activity.notes}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          ))}
+
+          {/* Back Button */}
+          <TouchableOpacity style={styles.backButton} onPress={() => setSelectedTrip(null)}>
+            <Text style={styles.backButtonText}>Back to Trips</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
+
+  if (trips.length === 0) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.noTripsText}>No saved trips found.</Text>
+        <TouchableOpacity style={styles.buildTripButton} onPress={() => router.push('/Home/Ai_Trip')}>
+          <Text style={styles.buildTripButtonText}>Build Trip with AI</Text>
+        </TouchableOpacity>
       </View>
-    ))}
-
-    {/* Back Button */}
-    <TouchableOpacity style={styles.backButton} onPress={() => setSelectedTrip(null)}>
-      <Text style={styles.backButtonText}>Back to Trips</Text>
-    </TouchableOpacity>
-  </View>
-</ScrollView>
-
-
     );
   }
 
@@ -162,16 +224,26 @@ const TripList = () => {
     <View style={styles.container}>
       <FlatList
         data={trips}
-        keyExtractor={(item) => item.id?.toString()} // Updated to use `id` as the key
+        keyExtractor={(item) => item.id?.toString()}
         renderItem={({ item, index }) => (
-          <TouchableOpacity
-            style={styles.tripItem}
-            onPress={() => fetchTripDetails(item.id)} // Updated to pass `id`
-          >
-            <Text style={styles.tripText}>
-              {index + 1}. {item.trip_name}
-            </Text>
-          </TouchableOpacity>
+          <View style={styles.tripItemContainer}>
+            <TouchableOpacity
+              style={styles.tripItem}
+              onPress={() => fetchTripDetails(item.id)}
+            >
+              <Text style={styles.tripText}>
+                {index + 1}. {item.trip_name}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Delete Icon */}
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => deleteTrip(item.id)}
+            >
+              <MaterialIcons name="delete" size={24} color="red" />
+            </TouchableOpacity>
+          </View>
         )}
       />
     </View>
@@ -179,10 +251,29 @@ const TripList = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
+ container: {
     flex: 1,
     backgroundColor: '#F9FAFC', // Subtle off-white for a light feel
-    
+    paddingHorizontal: 16, // Add padding to avoid overlapping with edges
+    paddingVertical: 20, // Top and bottom padding for better spacing
+  },
+  noTripsText: {
+    fontSize: 18,
+    color: '#333',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  buildTripButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  buildTripButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    alignItems:'center'
   },
   detailsContainer: {
     backgroundColor: '#FFFFFF',
@@ -220,22 +311,22 @@ const styles = StyleSheet.create({
   subHeading: {
     fontWeight: 'bold',
     color: '#42A5F5',
-    fontSize:18 // Cool blue for subheadings
+    fontSize: 18, // Cool blue for subheadings
   },
-   subHeading1: {
+  subHeading1: {
     fontWeight: 'bold',
     color: '#5A67D8',
-    fontSize:18 // Cool blue for subheadings
+    fontSize: 18,
   },
-   subHeading3: {
+  subHeading3: {
     fontWeight: 'bold',
     color: '#8BC34A',
-    fontSize:18 // Cool blue for subheadings
+    fontSize: 18,
   },
   subHeading4: {
     fontWeight: 'bold',
     color: '#3E2723',
-    fontSize:18 // Cool blue for subheadings
+    fontSize: 18,
   },
   sectionTitle: {
     fontSize: 22,
@@ -274,6 +365,9 @@ const styles = StyleSheet.create({
     color: '#37474F',
     lineHeight: 22,
   },
+  deleteButton: {
+    padding: 8,
+  },
   activityNote: {
     fontSize: 14,
     fontStyle: 'italic',
@@ -299,20 +393,39 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textTransform: 'uppercase',
   },
-  tripItem: {
-    backgroundColor: '#FFF',
+  tripItemContainer: {
+    flexDirection: 'row', // Arrange items in a row
+    justifyContent: 'space-between', // Space between text and icon
+    alignItems: 'center', // Align items vertically in the center
     padding: 16,
-    marginBottom: 10,
+    backgroundColor: '#FFFFFF', // Match trip item background
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#FFCC80',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
   },
   tripText: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#3E2723',
-    fontFamily:'outfit-Bold',
-    alignContent:'center'
+    fontWeight: 'bold',
   },
+  deleteIconContainer: {
+    backgroundColor: '#FFCDD2', // Light red for delete button background
+    borderRadius: 16,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  deleteIcon: {
+    fontSize: 18,
+    color: '#D32F2F', // Red color for the delete icon
+  },
+
 
 });
 

@@ -1046,6 +1046,24 @@ def get_trip_details():
         return jsonify({"error": "An internal server error occurred. Please try again later."}), 500
 
 
+@auth.route('/delete_ai_trip', methods=['DELETE'])
+def delete_trip():
+    data = request.json
+    trip_id = data.get('trip_id')
+
+    if not trip_id:
+        return jsonify({"error": "Trip ID is required."}), 400
+
+    try:
+        
+        cursor_object.execute("DELETE FROM user_trips WHERE trip_id = %s", (trip_id,))
+       
+        return jsonify({"message": "Trip deleted successfully."}), 200
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 500
+    
+
     
     
     
