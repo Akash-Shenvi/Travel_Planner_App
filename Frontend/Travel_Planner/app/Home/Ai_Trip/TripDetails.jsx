@@ -11,7 +11,7 @@ const TripItinerary = () => {
     // Fetch trip data from the backend
     const fetchTripData = async () => {
       try {
-        const response = await axios.post('http://192.168.57.138:5000/generate_trip');
+        const response = await axios.post('https://sunbeam-pet-octopus.ngrok-free.app/generate_trip');
         setTripData(response.data);
       } catch (err) {
         setError('Failed to load trip details. Please try again later.');

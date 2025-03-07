@@ -1,36 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  View, Text, StyleSheet, ActivityIndicator, ScrollView, Button, Modal, TextInput, Alert, TouchableOpacity 
+  View, Text, StyleSheet, TextInput, Modal, TouchableOpacity, Alert, ActivityIndicator, ScrollView 
 } from 'react-native';
-import { useRouter, useNavigation, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams,useNavigation } from 'expo-router';
+
 
 const ReviewPage = () => {
-  const router = useRouter();
   const params = useLocalSearchParams();
-  const navigation = useNavigation();
   const [tripData, setTripData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [tripName, setTripName] = useState('');
+  const [generated, setGenerated] = useState(false);
+  const navigation = useNavigation();
+useEffect(() => {
+  navigation.setOptions({ 
+    headerShown: true, // Show the header
+    title: '', // Hide the title
+  });
+}, [navigation]);
 
   useEffect(() => {
-    navigation.setOptions({
-      headerShown: true,
-      headerTransparent: true,
-      headerTitle: '', // Hides the back button label (if any)
-    });
-    fetchTripData();
+    if (!generated) {
+      fetchTripData();
+      setGenerated(true); // Prevents re-fetching on re-render
+    }
   }, []);
 
   const fetchTripData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.100.138:5000/generate_trip', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/generate_trip', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: params.name,
           startDate: params.startDate,
@@ -46,8 +49,10 @@ const ReviewPage = () => {
       }
 
       const data = await response.json();
+      console.log('Trip Data:', data);
       setTripData(data);
     } catch (err) {
+      console.error('Error fetching trip data:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -61,15 +66,10 @@ const ReviewPage = () => {
     }
 
     try {
-      const response = await fetch('http://192.168.100.138:5000/save_trip', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/save_trip', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tripName,
-          tripData,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tripName, tripData }),
       });
 
       if (!response.ok) {
@@ -86,7 +86,7 @@ const ReviewPage = () => {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4CAF50" />
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
     );
   }
@@ -111,70 +111,55 @@ const ReviewPage = () => {
 
   return (
     <>
-      <ScrollView style={styles.container}>
-        {/* Trip Summary Section */}
-        <View style={[styles.card, styles.shadow]}>
-          <Text style={styles.title}>Trip Overview</Text>
-          <Text style={styles.detail}>
-            Destination: <Text style={styles.highlight}>{trip_details?.destination || 'N/A'}</Text>
-          </Text>
-          <Text style={styles.detail}>
-            Dates: <Text style={styles.highlight}>{trip_details?.dates || 'N/A'}</Text>
-          </Text>
-          <Text style={styles.detail}>
-            Budget: <Text style={styles.highlight}>{trip_details?.budget || 'N/A'}</Text>
-          </Text>
-          <Text style={styles.detail}>
-            Duration: <Text style={styles.highlight}>{trip_details?.duration || 'N/A'} days</Text>
-          </Text>
-        </View>
+  <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+  <Text style={styles.title}>Review Your Trip</Text>
 
-        {/* Itinerary Section */}
-        <View style={[styles.card, styles.shadow]}>
-          <Text style={styles.title}>Itinerary</Text>
-          {itinerary.map((day, index) => (
-            <View key={index} style={styles.daySection}>
-              <Text style={styles.dayHeader}>{day.day}</Text>
-              {day.activities.map((activity, idx) => (
-                <View key={idx} style={styles.activity}>
-                  <Text style={styles.activityDesc}>{activity.description}</Text>
-                  <Text style={styles.activityDetail}>Location: {activity.location}</Text>
-                  <Text style={styles.activityDetail}>Estimated Cost: {activity.estimated_cost}</Text>
-                  {activity.notes && (
-                    <Text style={styles.activityNote}>Notes: {activity.notes}</Text>
-                  )}
-                </View>
-              ))}
-            </View>
-          ))}
-        </View>
+  {/* Trip Details Section */}
+  <View style={styles.section}>
+    <Text style={styles.header}>Trip Details</Text>
+    <Text style={styles.detail}>Destination: {trip_details?.destination || 'Not specified'}</Text>
+    <Text style={styles.detail}>Dates: {trip_details?.dates || 'Not specified'}</Text>
+    <Text style={styles.detail}>Budget: {trip_details?.budget || 'Not specified'}</Text>
+    <Text style={styles.detail}>Duration: {trip_details?.duration || 'Not specified'}</Text>
+  </View>
 
-        {/* Notes Section */}
-        <View style={[styles.card, styles.shadow]}>
-          <Text style={styles.title}>Important Notes</Text>
-          {notes.map((note, index) => (
-            <Text key={index} style={styles.note}>
-              • {note}
-            </Text>
-          ))}
-        </View>
+  {/* Itinerary Section */}
+  <View style={styles.section}>
+    <Text style={styles.header}>Itinerary</Text>
+    {itinerary.map((day, index) => (
+      <View key={index} style={styles.daySection}>
+        <Text style={styles.dayHeader}>{day.day}</Text>
+        {day.activities.map((activity, idx) => (
+          <View key={idx} style={styles.activity}>
+            <Text style={styles.activityDesc}>{activity.description}</Text>
+            <Text style={styles.activityDetail}>Location: {activity.location}</Text>
+            <Text style={styles.activityDetail}>Estimated Cost: {activity.estimated_cost}</Text>
+            {activity.notes && <Text style={styles.activityNote}>Notes: {activity.notes}</Text>}
+          </View>
+        ))}
+      </View>
+    ))}
+  </View>
 
-        {/* Save Button */}
-        <TouchableOpacity
-          style={styles.saveButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.saveButtonText}>Save Trip</Text>
-        </TouchableOpacity>
-      </ScrollView>
+  {/* Notes Section */}
+  <View style={styles.section}>
+    <Text style={styles.header}>Important Notes</Text>
+    {notes.map((note, index) => (
+      <Text key={index} style={styles.note}>• {note}</Text>
+    ))}
+  </View>
+
+  {/* Save Button (Now Wrapped in a View) */}
+  <View style={styles.saveButtonContainer}>
+    <TouchableOpacity style={styles.saveButton} onPress={() => setModalVisible(true)}>
+      <Text style={styles.saveButtonText}>Save Trip</Text>
+    </TouchableOpacity>
+  </View>
+</ScrollView>
+
 
       {/* Save Trip Modal */}
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
+      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Enter Trip Name</Text>
@@ -187,170 +172,181 @@ const ReviewPage = () => {
             <TouchableOpacity style={styles.modalButton} onPress={saveTrip}>
               <Text style={styles.modalButtonText}>Save</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.modalButton, styles.cancelButton]}
-              onPress={() => setModalVisible(false)}
-            >
+            <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setModalVisible(false)}>
               <Text style={styles.modalButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
+      
     </>
   );
 };
 
 // Styles
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFBF2', // Warm, light beige for a welcoming background
-    paddingHorizontal: 16,
-    paddingTop: 20,
+  container: { 
+    flex: 1, 
+    backgroundColor: '#F0F8FF', // Light blue background
+    paddingHorizontal: 20, 
+    paddingVertical: 30 
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFBF2',
+  center: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: '#F0F8FF' 
   },
-  card: {
-    backgroundColor: '#FFFFFF', // Clean white cards
-    borderRadius: 12,
-    marginBottom: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#FFCC80', // Orange accent border
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 6,
+  title: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    color: '#1E3A8A', // Deep blue
+    marginBottom: 20, 
+    textAlign: 'center' 
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 16,
-    color: '#FF5722', // Bright orange for title
-    textAlign: 'center',
+  section: { 
+    marginBottom: 20, 
+    backgroundColor: '#FFFFFF', 
+    padding: 15, 
+    borderRadius: 12, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.15, 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowRadius: 6, 
+    elevation: 5,
+    borderLeftWidth: 6, 
+    borderLeftColor: '#4A90E2' // Soft blue border on the left
   },
-  detail: {
-    fontSize: 16,
-    color: '#3E2723', // Dark brown for contrast
-    marginBottom: 8,
-    lineHeight: 22,
+  header: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    marginBottom: 10, 
+    color: '#2C3E50' // Dark slate gray
   },
-  highlight: {
-    fontWeight: '700',
-    color: '#8BC34A', // Bright green for highlights
+  detail: { 
+    fontSize: 16, 
+    color: '#555', 
+    marginBottom: 5 
   },
-  daySection: {
-    marginBottom: 24,
+  daySection: { 
+    marginBottom: 20 
   },
-  dayHeader: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#1976D2', // Blue for day headers
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#BBDEFB', // Light blue accent
-    paddingLeft: 10,
+  dayHeader: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    color: '#FF5733', // Vibrant coral red
+    marginBottom: 10 
   },
-  activity: {
-    marginBottom: 16,
-    paddingLeft: 12,
-    backgroundColor: '#FFF8E1', // Soft yellow for activity blocks
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#FFE082', // Yellow accent border
+  activity: { 
+    marginBottom: 10, 
+    backgroundColor: '#E3F2FD', // Light blue shade
+    padding: 12, 
+    borderRadius: 10, 
+    borderLeftWidth: 4, 
+    borderLeftColor: '#3498DB' // Blue accent
   },
-  activityDesc: {
-    fontSize: 16,
-    color: '#004D40', // Teal for activity descriptions
-    fontWeight: '600',
+  activityDesc: { 
+    fontSize: 16, 
+    color: '#333', 
+    fontWeight: 'bold' 
   },
-  activityDetail: {
-    fontSize: 14,
-    color: '#616161', // Neutral gray for secondary details
-    marginTop: 4,
+  activityDetail: { 
+    fontSize: 14, 
+    color: '#555' 
   },
-  activityNote: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    color: '#FF7043', // Orange for notes to match the theme
-    marginTop: 6,
+  activityNote: { 
+    fontSize: 14, 
+    fontStyle: 'italic', 
+    color: '#888' 
   },
-  note: {
-    fontSize: 14,
-    color: '#7B1FA2', // Purple for notes
-    marginBottom: 6,
-    paddingLeft: 10,
-    borderLeftWidth: 2,
-    borderLeftColor: '#D1C4E9', // Light purple accent
+  note: { 
+    fontSize: 14, 
+    color: '#333', 
+    marginBottom: 5, 
+    backgroundColor: '#FEF5E7', // Soft pastel orange
+    padding: 10, 
+    borderRadius: 8, 
+    borderLeftWidth: 4, 
+    borderLeftColor: '#F39C12' // Warm yellow accent
   },
-  errorText: {
-    fontSize: 16,
-    color: '#D50000', // Bright red for errors
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  saveButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    padding: 12,
-    alignItems: 'center',
-    marginVertical: 16,
-  },
-  saveButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#FFF',
-    padding: 20,
-    borderRadius: 12,
-    width: '80%',
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
-  input: {
-    width: '100%',
-    borderWidth: 1,
-    borderColor: '#CCC',
-    borderRadius: 8,
-    padding: 10,
-    marginBottom: 16,
-  },
-  modalButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 8,
-    padding: 10,
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 10,
-  },
-  cancelButton: {
-    backgroundColor: '#F44336',
-  },
-  modalButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    fontSize: 16,
+  errorText: { 
+    color: '#E74C3C', // Red error text
+    fontSize: 16 
   },
 
+  /*** Save Button Styling ***/
+  saveButtonContainer: { 
+    alignItems: 'center', 
+    marginTop: 20,
+    paddingBottom: 40
+  },
+  saveButton: { 
+    backgroundColor: '#2ECC71', // Green color
+    paddingVertical: 15, 
+    paddingHorizontal: 30, 
+    borderRadius: 10, 
+    alignItems: 'center', 
+    shadowColor: '#000', 
+    shadowOpacity: 0.2, 
+    shadowOffset: { width: 0, height: 3 }, 
+    shadowRadius: 5, 
+    elevation: 6 
+  },
+  saveButtonText: { 
+    color: '#fff', 
+    fontSize: 18, 
+    fontWeight: 'bold' 
+  },
+
+  /*** Modal Styling ***/
+  modalContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    backgroundColor: 'rgba(0,0,0,0.5)' 
+  },
+  modalContent: { 
+    width: 340, 
+    backgroundColor: '#FFFFFF', 
+    padding: 25, 
+    borderRadius: 14, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.3, 
+    shadowOffset: { width: 0, height: 4 }, 
+    shadowRadius: 6, 
+    elevation: 6 
+  },
+  modalTitle: { 
+    fontSize: 22, 
+    fontWeight: 'bold', 
+    marginBottom: 12, 
+    color: '#2C3E50', 
+    textAlign: 'center' 
+  },
+  input: { 
+    borderWidth: 1, 
+    borderColor: '#AAB7B8', 
+    padding: 14, 
+    marginBottom: 15, 
+    borderRadius: 8, 
+    fontSize: 16, 
+    backgroundColor: '#ECF0F1' 
+  },
+  modalButton: { 
+    backgroundColor: '#27AE60', 
+    padding: 14, 
+    alignItems: 'center', 
+    borderRadius: 8 
+  },
+  cancelButton: { 
+    backgroundColor: '#E74C3C', 
+    marginTop: 10 
+  },
+  modalButtonText: { 
+    color: '#fff', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  }
 });
 
 

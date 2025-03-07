@@ -11,6 +11,7 @@ import os
 import google.generativeai as genai
 from flask_session import Session
 from flask import Flask, request, jsonify
+
 with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'base_data.json'), encoding='utf-8') as fobj:
     api_key = json.load(fobj)['apikey']
 app = Flask(__name__)
@@ -46,7 +47,7 @@ mail = Mail(app)
 
 # Configure session
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=48)
+app.config['PERMANENT_SESSION_LIFETIME'] = datetime.timedelta(hours=2)
 Session(app)
 app.config['MYSQL_POOL_SIZE'] = 10
 app.config['MYSQL_CONNECT_TIMEOUT'] = 300  # Increase timeout
@@ -68,6 +69,7 @@ def login():
     data = request.get_json()
     email = data.get('email', '').strip().lower()
     password = data.get('password')
+    print(data)
 
     if not email or not password:
         return jsonify({"response": "Email and password are required."}), 400
@@ -85,7 +87,7 @@ def login():
         print(user_id)
         return jsonify({"response": "Login successful", "name": name}), 200
     else:
-        return jsonify({"response": "Incorrect password"}), 400
+        return jsonify({"response": "Invalid Credential either email or password"}), 401
 
 
 @auth.route('/signup', methods=['POST'])

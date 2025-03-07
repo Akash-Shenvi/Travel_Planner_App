@@ -16,7 +16,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
-const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyK_RnNNH0BPrM4WAnfvh-zfqkjeBbZP27I'; // Replace with your actual API key
 
 export default function HotelSearchScreen() {
   // State Hooks
@@ -274,7 +274,7 @@ export default function HotelSearchScreen() {
     style={styles.saveButton}
     onPress={async () => {
       try {
-        const response = await axios.post('http://192.168.27.138:5000/saveHotels', {
+        const response = await axios.post('https://sunbeam-pet-octopus.ngrok-free.app/saveHotels', {
           name: selectedHotel.name,
           location: selectedCity?.location || {}, // Ensure the location is passed correctly
           photo: selectedHotel.photos[0]?.uri || '', // Handle cases where photos might be unavailable

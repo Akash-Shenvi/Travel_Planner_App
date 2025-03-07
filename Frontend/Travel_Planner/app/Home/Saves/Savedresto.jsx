@@ -14,7 +14,7 @@ import {
 import axios from 'axios';
 import { MaterialIcons } from '@expo/vector-icons';
 
-const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyK_RnNNH0BPrM4WAnfvh-zfqkjeBbZP27I'; // Replace with your actual API key
 
 const SavedAttractionsScreen = () => {
   const [attractions, setAttractions] = useState([]);
@@ -30,7 +30,7 @@ const SavedAttractionsScreen = () => {
   const fetchAttractions = async () => {
     try {
       const response = await axios.post(
-        'http://192.168.27.138:5000/getresturants',
+        'https://sunbeam-pet-octopus.ngrok-free.app/getresturants',
         {},
         {
           withCredentials: true, // Ensure cookies/session are sent
@@ -74,7 +74,7 @@ const SavedAttractionsScreen = () => {
   const deleteAttraction = async (name) => {
     try {
       const response = await axios.post(
-        'http://192.168.27.138:5000/deleteresto',
+        'https://sunbeam-pet-octopus.ngrok-free.app/deleteresto',
         { name },
         { withCredentials: true }
       );
@@ -92,7 +92,7 @@ const SavedAttractionsScreen = () => {
     const addPlaceToAnotherList = async (name,placeType) => {
   try {
     const response = await axios.post(
-      'http://192.168.27.138:5000/add_place',
+      'https://sunbeam-pet-octopus.ngrok-free.app/add_place',
       { name, place_type: placeType }, // Use lowercase 'name'
       { withCredentials: true }
     );

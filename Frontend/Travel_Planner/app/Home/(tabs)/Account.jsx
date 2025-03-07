@@ -50,7 +50,7 @@ export default function EditProfile() {
 
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://192.168.27.138:5000/view_profile', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/view_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -86,7 +86,7 @@ export default function EditProfile() {
     };
 
     try {
-      const response = await fetch('http://192.168.27.138:5000/update_profile', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/update_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profileData),
@@ -108,7 +108,7 @@ export default function EditProfile() {
 
   const logout = async () => {
     try {
-      const response = await fetch('http://192.168.27.138:5000/logout', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/logout', {
         method: 'POST',
         credentials: 'include', // Include cookies if required
         headers: { 'Content-Type': 'application/json' },

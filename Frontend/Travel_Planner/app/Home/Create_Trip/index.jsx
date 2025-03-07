@@ -25,7 +25,7 @@ const UserPlacesScreen = () => {
   // Fetch user places and check if visited
   const fetchPlaces = async () => {
     try {
-      const response = await axios.get('http://192.168.27.138:5000/get_user_places', {
+      const response = await axios.get('https://sunbeam-pet-octopus.ngrok-free.app/get_user_places', {
         withCredentials: true,
       });
       const rawPlaces = response.data.places;
@@ -56,7 +56,7 @@ const UserPlacesScreen = () => {
   // Check if the place is visited by calling the backend
   const checkIfVisited = async (place_id, place_type) => {
     try {
-      const response = await axios.get('http://192.168.27.138:5000/check_place_visited', {
+      const response = await axios.get('https://sunbeam-pet-octopus.ngrok-free.app/check_place_visited', {
         params: { place_id, place_type },
         withCredentials: true,
       });
@@ -71,14 +71,14 @@ const UserPlacesScreen = () => {
   const markAsVisited = async (place_id, place_type) => {
     try {
       const response = await axios.post(
-        'http://192.168.27.138:5000/mark_as_visited',
+        'https://sunbeam-pet-octopus.ngrok-free.app/mark_as_visited',
         { place_id, place_type },
         { withCredentials: true }
       );
       Alert.alert('Success', response.data.message);
       fetchPlaces(); // Refresh the list after marking as visited
     } catch (error) {
-      Alert.alert('Error', 'Failed to mark the place as visited.');
+      
     }
   };
 
@@ -89,7 +89,7 @@ const UserPlacesScreen = () => {
   // Delete a specific place
   const deletePlace = async (place_id, place_type) => {
     try {
-      const response = await axios.delete('http://192.168.27.138:5000/delete_place', {
+      const response = await axios.delete('https://sunbeam-pet-octopus.ngrok-free.app/delete_place', {
         data: { place_id, place_type },
         withCredentials: true,
       });
@@ -103,7 +103,7 @@ const UserPlacesScreen = () => {
   // Delete all places
   const deleteAllPlaces = async () => {
     try {
-      const response = await axios.delete('http://192.168.27.138:5000/delete_all_places', {
+      const response = await axios.delete('https://sunbeam-pet-octopus.ngrok-free.app/delete_all_places', {
         withCredentials: true,
       });
       Alert.alert('Success', response.data.message);
@@ -117,7 +117,7 @@ const UserPlacesScreen = () => {
   const getPlaceCoordinates = async (place_id) => {
     try {
       const response = await axios.get(
-        `http://192.168.27.138:5000/get_user_places_locations?place_id=${place_id}`,
+        `https://sunbeam-pet-octopus.ngrok-free.app/get_user_places_locations?place_id=${place_id}`,
         { withCredentials: true }
       );
 

@@ -34,7 +34,7 @@ export default function TravelChatbot() {
   // Fetch user profile (for dynamic name)
   const fetchProfile = async () => {
     try {
-      const response = await fetch('http://192.168.27.138:5000/view_profile', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/view_profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -68,7 +68,7 @@ export default function TravelChatbot() {
 
     setIsLoading(true); // Show loader while fetching the response
     try {
-      const response = await fetch('http://192.168.27.138:5000/chat', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: inputText }),

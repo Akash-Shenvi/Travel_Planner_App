@@ -16,7 +16,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 
-const GOOGLE_API_KEY = 'AlzaSyIc0rhqLEr8qYNwgzueZwh22QJZL7yQ-iH'; // Replace with your actual API key
+const GOOGLE_API_KEY = 'AlzaSyK_RnNNH0BPrM4WAnfvh-zfqkjeBbZP27I'; // Replace with your actual API key
 
 export default function RestaurantSearchScreen() {
   // State Hooks
@@ -281,7 +281,7 @@ export default function RestaurantSearchScreen() {
     style={styles.saveButton}
     onPress={async () => {
       try {
-        await axios.post('http://192.168.27.138:5000/saveResturants', {
+        await axios.post('https://sunbeam-pet-octopus.ngrok-free.app/saveResturants', {
           name: selectedRestaurant.name,
           location: selectedCity?.location || {}, // Fallback to an empty object if no location
           photo: selectedRestaurant.photos.length > 0 ? selectedRestaurant.photos[0].uri : 'No photo available',

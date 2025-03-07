@@ -9,6 +9,7 @@ const TripList = () => {
   const [trips, setTrips] = useState([]);
   const [selectedTrip, setSelectedTrip] = useState(null);
   const [loading, setLoading] = useState(false);
+   const [refreshing, setRefreshing] = useState(false);
   const navigation = useNavigation();
   const router = useRouter();
 
@@ -19,12 +20,12 @@ const TripList = () => {
     });
     
     fetchTrips();
-  }, []);
+  }, [refreshing]);
 
   const fetchTrips = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.100.138:5000/get_trips');
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/get_trips');
       if (!response.ok) {
         throw new Error('Failed to fetch trips.');
       }
@@ -45,7 +46,7 @@ const TripList = () => {
 
   const deleteTrip = async (id) => {
     try {
-      const response = await fetch(`http://192.168.100.138:5000/delete_ai_trip`, {
+      const response = await fetch(`https://sunbeam-pet-octopus.ngrok-free.app/delete_ai_trip`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -61,6 +62,7 @@ const TripList = () => {
 
       if (data.success) {
         setTrips((prevTrips) => prevTrips.filter((trip) => trip.id !== id));
+        setRefreshing((prev) => !prev);
         Alert.alert('Success', 'Trip deleted successfully.');
       } else {
         throw new Error(data.message || 'Failed to delete trip.');
@@ -72,7 +74,7 @@ const TripList = () => {
 
   const deleteAllTrips = async () => {
     try {
-      const response = await fetch(`http://192.168.100.138:5000/delete_all_trips`, {
+      const response = await fetch(`https://sunbeam-pet-octopus.ngrok-free.app/delete_all_trips`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -88,6 +90,7 @@ const TripList = () => {
       if (data.success) {
         setTrips([]); // Clear the trips list
         Alert.alert('Success', 'All trips deleted successfully.');
+        
       } else {
         throw new Error(data.message || 'Failed to delete all trips.');
       }
@@ -104,7 +107,7 @@ const TripList = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://192.168.100.138:5000/get_trip_details', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/get_trip_details', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

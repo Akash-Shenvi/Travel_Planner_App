@@ -32,7 +32,7 @@ const ContactUs = () => {
     }
 
     try {
-      const response = await fetch('http://192.168.27.138:5000/send-feedback', {
+      const response = await fetch('https://sunbeam-pet-octopus.ngrok-free.app/send-feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ feedback }),

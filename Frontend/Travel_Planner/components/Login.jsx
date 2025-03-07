@@ -20,7 +20,7 @@ export default function Login() {
     });
 
     // Check session
-    fetch('http://192.168.100.138:5000/check-session', {
+    fetch('https://sunbeam-pet-octopus.ngrok-free.app/check-session', {
       method: 'GET',
       credentials: 'include', // Ensure cookies are sent with the request
     })
