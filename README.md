@@ -94,7 +94,7 @@ Travel_Planner_App-master/
 
 ## Developers
 
-- Akash Shenvi, Anruddh Nayak,Anantha,Joylan Dsouza
+- Akash Shenvi, Aniruddh Nayak,Anantha,Joylan Dsouza
 
 ##
 
